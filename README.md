@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tripsync
 
-## Getting Started
+A group trip planner: one person creates a trip and shares a link, friends join
+without an account, then everyone votes on dates and destinations, builds the
+itinerary together and splits the bill.
 
-First, run the development server:
+Built from a Claude Design handoff — Next.js 16 (App Router) + Postgres.
+
+## Running it
 
 ```bash
+npm install
+cp .env.example .env.local     # point DATABASE_URL at your database
+npm run db:migrate             # create the tables
+npm run db:seed                # optional: the "Cabo Reunion" demo trip
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000. The seed puts a fully populated trip at
+`/trip/cabo-reunion`; opening it as a fresh browser sends you through the join
+flow first, which is the real path an invited friend takes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Pointing at Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a project, then **Project Settings → Database → Connection string → URI**.
+2. Use the **pooled** connection (port `6543`) for `DATABASE_URL`. The Postgres
+   client already sets `prepare: false`, which that pooler requires.
+3. `npm run db:migrate` against it once.
 
-## Learn More
+The schema uses nothing Supabase-specific, so a plain Postgres 15+ works too.
 
-To learn more about Next.js, take a look at the following resources:
+## How it fits together
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Layer | Where |
+|---|---|
+| Schema | [`db/schema.ts`](db/schema.ts), migrations in [`drizzle/`](drizzle) |
+| Reads | [`db/queries.ts`](db/queries.ts), [`db/dashboard.ts`](db/dashboard.ts) |
+| Writes | Server Actions in [`app/actions/`](app/actions) |
+| Identity | [`lib/session.ts`](lib/session.ts) |
+| Money | [`lib/money.ts`](lib/money.ts), [`lib/balances.ts`](lib/balances.ts) |
+| Automations | [`lib/automations.ts`](lib/automations.ts) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Identity without accounts.** Joining sets an httpOnly cookie holding an opaque
+session token; a `members` row ties that token to one trip. One browser can be a
+member of many trips. Every Server Action calls `requireMember()` before it
+writes, because actions are reachable by direct POST, not just through the UI.
 
-## Deploy on Vercel
+**Money is integer cents** end to end. Balances are derived from expenses,
+splits and recorded payments; the settle-up suggestions are computed fresh on
+every read rather than stored, so they can never drift from the ledger. Only
+payments people actually made are persisted.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Automations and n8n
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app **never sends anything itself**. Anything with an outside effect is
+queued in the `outbox` table for an external runner to pick up:
+
+```sql
+-- what n8n polls
+SELECT * FROM outbox
+ WHERE status = 'pending' AND run_after <= now()
+ ORDER BY run_after
+ LIMIT 20;
+
+-- ...and writes back when it's handled
+UPDATE outbox SET status = 'done', processed_at = now() WHERE id = $1;
+UPDATE outbox SET status = 'failed', attempts = attempts + 1, last_error = $2 WHERE id = $1;
+```
+
+| `kind` | Queued when | Payload |
+|---|---|---|
+| `vote_reminder` | trip created; due 24h before the deadline | `{ slug, tripName }` |
+| `calendar_invite` | dates lock | `{ start, end, tripName, slug }` |
+| `payment_reminder` | an expense is added | `{ expenseId }` |
+| `settle_up_summary` | reserved for the trip being marked done | `{ }` |
+
+`dedupe_key` is uniquely indexed, so re-queuing the same reminder is a no-op and
+the app can be careless about calling `enqueue()` more than once. Turning off
+Automations on the Updates screen flips `trips.automations_enabled`, after which
+nothing new is queued.
+
+### Driving the state machine
+
+State changes stay in the app, not the runner. When the voting deadline passes,
+the winning range is locked via a guarded `UPDATE ... WHERE phase = 'voting'`, so
+exactly one caller wins the transition and queues the follow-up work — n8n only
+has to send things.
+
+That transition runs lazily whenever someone loads the trip, which is enough for
+correctness but not if nobody opens the app. So there's also a scheduled hook:
+
+```
+POST /api/automations/tick
+x-tripsync-secret: $AUTOMATION_SECRET
+
+→ { "checked": 1, "locked": [{ "slug": "cabo-reunion", "start": "2026-12-12", "end": "2026-12-15" }] }
+```
+
+It advances every trip whose deadline has passed and is safe to call as often as
+you like — a second call returns `{ "checked": 0 }`. Set `AUTOMATION_SECRET` in
+the environment and point an n8n Schedule trigger at it (every 5 minutes is
+plenty), then have the same workflow drain the `outbox`.
+
+## Scripts
+
+| | |
+|---|---|
+| `npm run dev` | dev server |
+| `npm run db:generate` | write a migration from schema changes |
+| `npm run db:migrate` | apply migrations |
+| `npm run db:seed` | rebuild the demo trip (destructive for that trip only) |
+| `npm run db:studio` | Drizzle Studio |
+
+## Photography
+
+Photos are from Wikimedia Commons under CC BY / CC BY-SA and are credited at
+[`/credits`](app/credits/page.tsx). Source and licence for each travel with the
+image in [`lib/images.ts`](lib/images.ts).

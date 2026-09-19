@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789708909062,
+      "tag": "0000_luxuriant_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789709152813,
+      "tag": "0001_workable_susan_delgado",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789761816379,
+      "tag": "0002_flowery_doctor_spectrum",
+      "breakpoints": true
+    }
+  ]
+}

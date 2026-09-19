@@ -1,68 +1,144 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { LogoMark } from "@/components/logo";
+import { Cover } from "@/components/ui";
+import { photos } from "@/lib/images";
 
-export default function Home() {
+const steps = [
+  {
+    title: "Create & share",
+    body: "Name the trip, drop a cover photo, set a voting deadline.",
+  },
+  {
+    title: "Friends vote",
+    body: "They tap the link, add a name, mark free days and favourite spots.",
+  },
+  {
+    title: "Tripsync runs it",
+    body: "Dates lock, invites land in calendars, expenses settle up.",
+  },
+];
+
+export default function LandingPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="w-full">
+      <header className="mx-auto w-full max-w-[430px] lg:max-w-[1280px] flex items-center justify-between px-[22px] lg:px-6 py-2.5 lg:py-4">
+        <div className="flex items-center gap-2.5">
+          <LogoMark size={18} className="text-accent" />
+          <div className="font-display font-bold text-[15px] lg:text-[16px]">
+            Tripsync
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            href="/join"
+            className="hidden lg:block border border-line rounded-full px-[13px] py-[7px] font-semibold text-[12px] text-ink2 hover:border-accent hover:text-ink"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            I have an invite link
+          </Link>
+          <Link
+            href="/new"
+            className="hidden lg:block bg-accent text-accent-ink rounded-full px-4 py-2 font-semibold text-[12px] hover:opacity-90"
           >
-            Documentation
-          </a>
+            Plan a trip
+          </Link>
         </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-[430px] lg:max-w-[1280px] px-[22px] lg:px-6 pt-[26px] lg:pt-14 pb-12 lg:pb-20">
+        <section className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16 lg:items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 bg-accent-soft text-accent rounded-full px-3 py-1.5 font-semibold text-[12px] lg:text-[13px] mb-[18px]">
+              No account needed to join
+            </p>
+
+            <h1 className="font-display font-semibold text-[35px] lg:text-[60px] leading-[1.02] tracking-[-0.03em] mb-3 lg:mb-5">
+              Get six friends to agree on one weekend.
+            </h1>
+
+            <p className="text-[14px] lg:text-[17px] leading-[1.5] text-ink2 mb-[18px] lg:mb-7 lg:max-w-[520px]">
+              Share one link. Everyone votes on dates and places, builds the
+              itinerary, and splits the bill — reminders and calendar invites
+              happen on their own.
+            </p>
+
+            <div className="flex flex-col lg:flex-row gap-2.5 lg:gap-3">
+              <Link
+                href="/new"
+                className="bg-accent text-accent-ink rounded-[16px] p-4 lg:px-8 text-center font-semibold text-[16px] hover:opacity-90"
+              >
+                Plan a trip
+              </Link>
+              <Link
+                href="/join"
+                className="border border-line text-ink rounded-[16px] p-[15px] lg:px-8 text-center font-semibold text-[15px] hover:border-accent"
+              >
+                I have an invite link
+              </Link>
+            </div>
+
+            <div className="flex items-center gap-2.5 mt-4 lg:mt-7 mb-[18px] lg:mb-0">
+              <div className="text-[12px] lg:text-[13px] text-ink2">
+                No account, no app — just a link your friends can open.
+              </div>
+            </div>
+          </div>
+
+          <Cover
+            photo={photos.hero}
+            sizes="(min-width: 1024px) 45vw, 1px"
+            className="hidden lg:flex aspect-[4/5] max-h-[560px] rounded-[28px] items-end p-6"
+          >
+            <div className="w-full bg-ink text-bg rounded-[18px] px-5 py-4 flex items-center justify-between gap-4 shadow-frame">
+              <div>
+                <div className="font-semibold text-[14px] mb-[3px]">
+                  Voting closes in 2 days
+                </div>
+                <div className="text-[12px] opacity-70">4 of 6 have voted</div>
+              </div>
+              <div className="font-display font-semibold text-[22px]">47h</div>
+            </div>
+          </Cover>
+        </section>
+
+        <section className="border-t border-line pt-4 lg:pt-14 lg:mt-16">
+          <h2 className="font-semibold text-[11px] lg:text-[12px] tracking-[0.12em] uppercase text-ink2 mb-3 lg:mb-6">
+            How it works
+          </h2>
+          <ol className="flex flex-col lg:grid lg:grid-cols-3 gap-[9px] lg:gap-5">
+            {steps.map((step, i) => (
+              <li
+                key={step.title}
+                className="flex lg:flex-col gap-3 lg:gap-4 items-start bg-surface2 rounded-[16px] lg:rounded-[20px] px-[13px] py-[11px] lg:p-6"
+              >
+                <div className="w-[26px] h-[26px] lg:w-9 lg:h-9 shrink-0 rounded-[9px] lg:rounded-xl bg-accent text-accent-ink grid place-items-center font-bold text-[13px] lg:text-[16px]">
+                  {i + 1}
+                </div>
+                <div>
+                  <div className="font-semibold text-[15px] lg:text-[18px] mb-[3px] lg:mb-2">
+                    {step.title}
+                  </div>
+                  <div className="text-[13px] lg:text-[14px] leading-[1.45] lg:leading-[1.55] text-ink2">
+                    {step.body}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <footer className="border-t border-line mt-10 lg:mt-14 pt-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="text-[12px] text-ink2">
+            Tripsync — a Claude Design handoff, built for real.
+          </div>
+          <Link
+            href="/credits"
+            className="text-[12px] text-ink2 hover:text-ink hover:underline"
+          >
+            Photo credits
+          </Link>
+        </footer>
       </main>
     </div>
   );

@@ -1,0 +1,1 @@
+ALTER TABLE "trips" ADD COLUMN "automations_enabled" boolean DEFAULT true NOT NULL;
