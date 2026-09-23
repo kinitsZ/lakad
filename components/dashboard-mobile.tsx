@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmailNudge } from "@/components/email-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { CopyLinkButton } from "@/components/trip-nav";
 import { TripBanner } from "@/components/trip-banner";
@@ -18,12 +19,14 @@ export function DashboardMobile({
   members,
   summary,
   inviteUrl,
+  needsEmail,
 }: {
   slug: string;
   trip: Trip;
   members: MemberView[];
   summary: DashboardSummary;
   inviteUrl: string;
+  needsEmail: boolean;
 }) {
   const current = phaseLabel(trip.phase);
 
@@ -95,6 +98,8 @@ export function DashboardMobile({
           />
         )}
 
+        {needsEmail && <EmailNudge slug={slug} className="mb-3" />}
+
         <div className="grid grid-cols-2 gap-2.5">
           <SummaryCard
             href={`/trip/${slug}/dates`}
@@ -148,10 +153,10 @@ export function DashboardMobile({
             <div className={`text-[12px] ${summary.unpaidCount ? "text-warn" : "text-ink2"}`}>
               {summary.unpaidCount
                 ? `${summary.unpaidCount} ${
-                    summary.unpaidCount === 1 ? "person hasn't" : "people haven't"
-                  } paid`
+                    summary.unpaidCount === 1 ? "person still owes" : "people still owe"
+                  }`
                 : summary.hasExpenses
-                  ? "All settled up"
+                  ? "Nobody owes anything"
                   : "Nothing spent yet"}
             </div>
           </SummaryCard>

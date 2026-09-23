@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { setAutomations } from "@/app/actions/trips";
 import { markAllRead } from "@/app/actions/updates";
+import { DeviceCard } from "@/components/device-card";
+import { EmailCard } from "@/components/email-card";
 import { Avatar, SectionLabel } from "@/components/ui";
 import type { MemberView, UpdateView } from "@/db/queries";
 
@@ -13,12 +15,14 @@ export function UpdatesPanel({
   updates,
   members,
   automationsEnabled,
+  email,
 }: {
   slug: string;
   tripId: string;
   updates: UpdateView[];
   members: MemberView[];
   automationsEnabled: boolean;
+  email: string | null;
 }) {
   const [pending, start] = useTransition();
   const [automations, setLocalAutomations] = useState(automationsEnabled);
@@ -106,38 +110,42 @@ export function UpdatesPanel({
           })}
         </div>
 
-        <div className="bg-surface2 rounded-[16px] lg:rounded-[20px] px-[15px] lg:px-[18px] py-[13px] lg:py-[18px] flex items-center lg:items-start lg:flex-col justify-between gap-3 lg:gap-4">
-          <div className="font-medium text-[12px] text-ink2 lg:text-[13px]">
-            <span className="lg:hidden">Automations: reminders, invites, settle-up</span>
-            <span className="hidden lg:block font-display font-semibold text-[15px] text-ink mb-1">
-              Automations
-            </span>
-            <span className="hidden lg:block text-ink2 leading-[1.5]">
-              Reminders, calendar invites and settle-up summaries are queued for the automation
-              runner to send.
-            </span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={automations}
-            aria-label="Automations"
-            disabled={pending}
-            onClick={() => {
-              const next = !automations;
-              setLocalAutomations(next);
-              start(() => void setAutomations(tripId, next));
-            }}
-            className={`w-[38px] h-[22px] shrink-0 rounded-full flex items-center p-0.5 cursor-pointer ${
-              automations ? "bg-accent justify-end" : "bg-line justify-start"
-            }`}
-          >
-            <span
-              className={`w-[18px] h-[18px] rounded-full ${
-                automations ? "bg-accent-ink" : "bg-surface"
+        <div className="flex flex-col gap-2.5 lg:gap-4">
+          <EmailCard tripId={tripId} email={email} />
+          <DeviceCard tripId={tripId} />
+          <div className="bg-surface2 rounded-[16px] lg:rounded-[20px] px-[15px] lg:px-[18px] py-[13px] lg:py-[18px] flex items-center lg:items-start lg:flex-col justify-between gap-3 lg:gap-4">
+            <div className="font-medium text-[12px] text-ink2 lg:text-[13px]">
+              <span className="lg:hidden">Automations: reminders, invites, settle-up</span>
+              <span className="hidden lg:block font-display font-semibold text-[15px] text-ink mb-1">
+                Automations
+              </span>
+              <span className="hidden lg:block text-ink2 leading-[1.5]">
+                Reminders, calendar invites and settle-up summaries are queued for the automation
+                runner to send.
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={automations}
+              aria-label="Automations"
+              disabled={pending}
+              onClick={() => {
+                const next = !automations;
+                setLocalAutomations(next);
+                start(() => void setAutomations(tripId, next));
+              }}
+              className={`w-[38px] h-[22px] shrink-0 rounded-full flex items-center p-0.5 cursor-pointer ${
+                automations ? "bg-accent justify-end" : "bg-line justify-start"
               }`}
-            />
-          </button>
+            >
+              <span
+                className={`w-[18px] h-[18px] rounded-full ${
+                  automations ? "bg-accent-ink" : "bg-surface"
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>

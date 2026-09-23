@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EmailNudge } from "@/components/email-card";
 import { LockDatesButton } from "@/components/lock-dates-button";
 import { TripBanner } from "@/components/trip-banner";
 import { Avatar, AvatarStack, PhasePill } from "@/components/ui";
@@ -19,12 +20,14 @@ export function DashboardDesktop({
   members,
   summary,
   isOrganiser,
+  needsEmail,
 }: {
   slug: string;
   trip: Trip;
   members: MemberView[];
   summary: DashboardSummary;
   isOrganiser: boolean;
+  needsEmail: boolean;
 }) {
   const current = phaseLabel(trip.phase);
 
@@ -188,8 +191,8 @@ export function DashboardDesktop({
                 }`}
               >
                 {summary.myBalanceCents === 0
-                  ? "You're all square"
-                  : `${summary.myBalanceCents > 0 ? "You are owed" : "You owe"} ${moneyExact(
+                  ? "You don't owe anything"
+                  : `${summary.myBalanceCents > 0 ? "You get back" : "You owe"} ${moneyExact(
                       summary.myBalanceCents,
                     )}`}
               </p>
@@ -198,7 +201,7 @@ export function DashboardDesktop({
                   <span className="w-1.5 h-1.5 rounded-full bg-warn" />
                   <div className="font-medium text-[12px] text-ink">
                     {summary.unpaidCount}{" "}
-                    {summary.unpaidCount === 1 ? "person hasn't" : "people haven't"} paid yet
+                    {summary.unpaidCount === 1 ? "person still owes" : "people still owe"} money
                   </div>
                 </div>
               )}
@@ -207,6 +210,7 @@ export function DashboardDesktop({
         </div>
 
         <aside className="flex flex-col gap-3.5">
+          {needsEmail && <EmailNudge slug={slug} />}
           <div className="bg-surface border border-line rounded-[20px] p-[18px]">
             <div className="flex items-center justify-between mb-3.5">
               <h2 className="font-display font-semibold text-[15px]">Updates</h2>

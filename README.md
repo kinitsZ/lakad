@@ -41,8 +41,15 @@ The schema uses nothing Supabase-specific, so a plain Postgres 15+ works too.
 | Automations | [`lib/automations.ts`](lib/automations.ts) |
 
 **Identity without accounts.** Joining sets an httpOnly cookie holding an opaque
-session token; a `members` row ties that token to one trip. One browser can be a
-member of many trips. Every Server Action calls `requireMember()` before it
+session token; `member_sessions` ties that token to a member of one trip. One
+browser can be a member of many trips, and one member can be signed in on many
+browsers.
+
+**Other devices.** From Updates → "Use on another device", a member gets a QR
+code / link (`/link/<token>`) that signs a second browser in as them. It works
+once and expires after 10 minutes; only a SHA-256 of the token is stored. Opening
+the link only shows "Continue as …" — the sign-in happens on the button's POST,
+so chat apps that pre-fetch links for previews can't spend it. Every Server Action calls `requireMember()` before it
 writes, because actions are reachable by direct POST, not just through the UI.
 
 **Money is integer cents** end to end. Balances are derived from expenses,

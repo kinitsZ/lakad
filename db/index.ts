@@ -22,9 +22,9 @@ function connect(): Db {
   const client =
     globalForDb.__tripsyncClient ??
     postgres(url, {
-      // Supabase's transaction-mode pooler (port 6543) can't use prepared
-      // statements; harmless everywhere else.
-      prepare: false,
+      // Supabase's transaction-mode pooler (port 6543) can't use prepared statements.
+      // Everywhere else they save a round trip on every query with parameters.
+      prepare: new URL(url).port !== "6543",
       max: Number(process.env.DATABASE_POOL_MAX ?? 5),
     });
 

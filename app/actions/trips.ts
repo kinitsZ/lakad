@@ -9,7 +9,7 @@ import { getTripBySlug } from "@/db/queries";
 import { members, trips } from "@/db/schema";
 import { recordUpdate, scheduleVoteReminder } from "@/lib/automations";
 import { initialsFor, slugify, toneForIndex } from "@/lib/naming";
-import { ensureSession, getCurrentMember, requireMember } from "@/lib/session";
+import { attachSession, ensureSession, getCurrentMember, requireMember } from "@/lib/session";
 
 /** Only the bundled photos are selectable; anything else falls back to generated. */
 const COVER_KEYS = ["caboCover", "caboArch", "tulum", "lisbon", "hero"] as const;
@@ -63,14 +63,17 @@ export async function createTrip(formData: FormData) {
     })
     .returning();
 
-  await db.insert(members).values({
-    tripId: trip.id,
-    sessionToken: token,
-    name: input.organiserName,
-    initials: initialsFor(input.organiserName),
-    tone: toneForIndex(0),
-    isOrganiser: true,
-  });
+  const [organiser] = await db
+    .insert(members)
+    .values({
+      tripId: trip.id,
+      name: input.organiserName,
+      initials: initialsFor(input.organiserName),
+      tone: toneForIndex(0),
+      isOrganiser: true,
+    })
+    .returning({ id: members.id });
+  await attachSession(token, organiser.id, trip.id);
 
   await recordUpdate({
     tripId: trip.id,
@@ -111,13 +114,16 @@ export async function joinTrip(formData: FormData) {
     .from(members)
     .where(eq(members.tripId, trip.id));
 
-  await db.insert(members).values({
-    tripId: trip.id,
-    sessionToken: token,
-    name: parsed.data.name,
-    initials: initialsFor(parsed.data.name),
-    tone: toneForIndex(count),
-  });
+  const [joined] = await db
+    .insert(members)
+    .values({
+      tripId: trip.id,
+      name: parsed.data.name,
+      initials: initialsFor(parsed.data.name),
+      tone: toneForIndex(count),
+    })
+    .returning({ id: members.id });
+  await attachSession(token, joined.id, trip.id);
 
   await recordUpdate({
     tripId: trip.id,

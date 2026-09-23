@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { UpdatesPanel } from "@/components/updates-panel";
 import { getTripContext, getUpdates } from "@/db/queries";
+import { getCurrentMember } from "@/lib/session";
 
 export const metadata = { title: "Updates · Tripsync" };
 
@@ -9,7 +10,11 @@ export default async function UpdatesPage({ params }: PageProps<"/trip/[slug]/up
   const context = await getTripContext(slug);
   if (!context || !context.currentMember) notFound();
 
-  const updates = await getUpdates(context.trip.id, context.currentMember.id);
+  // The roster never carries emails to the client; only your own is loaded, for this card.
+  const [updates, me] = await Promise.all([
+    getUpdates(context.trip.id, context.currentMember.id),
+    getCurrentMember(context.trip.id),
+  ]);
 
   return (
     <UpdatesPanel
@@ -18,6 +23,7 @@ export default async function UpdatesPage({ params }: PageProps<"/trip/[slug]/up
       updates={updates}
       members={context.members}
       automationsEnabled={context.trip.automationsEnabled}
+      email={me?.email ?? null}
     />
   );
 }

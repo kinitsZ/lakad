@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { members, sessions } from "@/db/schema";
+import { memberSessions, members, sessions } from "@/db/schema";
 
 const COOKIE = "tripsync_session";
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -53,12 +53,30 @@ export async function getCurrentMember(tripId: string) {
   const token = await getSessionToken();
   if (!token) return null;
 
-  const [member] = await db
-    .select()
-    .from(members)
-    .where(and(eq(members.tripId, tripId), eq(members.sessionToken, token)))
+  const [row] = await db
+    .select({ member: members })
+    .from(memberSessions)
+    .innerJoin(members, eq(members.id, memberSessions.memberId))
+    .where(and(eq(memberSessions.sessionToken, token), eq(members.tripId, tripId)))
     .limit(1);
-  return member ?? null;
+  return row?.member ?? null;
+}
+
+/**
+ * Makes this browser act as `memberId`. If the browser was already somebody else
+ * on the same trip, that link is dropped so it's never two people at once.
+ */
+export async function attachSession(token: string, memberId: string, tripId: string) {
+  await db.transaction(async (tx) => {
+    const onThisTrip = tx
+      .select({ id: members.id })
+      .from(members)
+      .where(eq(members.tripId, tripId));
+    await tx
+      .delete(memberSessions)
+      .where(and(eq(memberSessions.sessionToken, token), inArray(memberSessions.memberId, onThisTrip)));
+    await tx.insert(memberSessions).values({ memberId, sessionToken: token });
+  });
 }
 
 /**

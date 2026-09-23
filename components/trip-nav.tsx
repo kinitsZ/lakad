@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { LogoMark } from "@/components/logo";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -14,6 +14,7 @@ const desktopLinks = [
   { label: "Destination", href: "/destinations" },
   { label: "Itinerary", href: "/itinerary" },
   { label: "Expenses", href: "/expenses" },
+  { label: "Updates", href: "/updates" },
 ];
 
 const tabs = [
@@ -126,7 +127,7 @@ export function TripTabBar({ slug }: { slug: string }) {
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-10 border-t border-line bg-surface">
-      <div className="mx-auto max-w-[430px] flex justify-around pt-3 pb-[22px]">
+      <div className="mx-auto max-w-[430px] flex">
         {tabs.map((tab) => {
           const active = tab.matches.includes(segment);
           return (
@@ -134,15 +135,34 @@ export function TripTabBar({ slug }: { slug: string }) {
               key={tab.label}
               href={`/trip/${slug}${tab.href}`}
               aria-current={active ? "page" : undefined}
-              className={`text-[11px] text-center ${
-                active ? "font-semibold text-accent" : "font-medium text-ink2"
-              }`}
+              className="flex-1 pt-3 pb-[22px] text-center [-webkit-tap-highlight-color:transparent] active:opacity-60 transition-opacity"
             >
-              {tab.label}
+              <TabLabel label={tab.label} active={active} />
             </Link>
           );
         })}
       </div>
     </nav>
+  );
+}
+
+/** Lights up the moment it's tapped, before the next page has arrived. */
+function TabLabel({ label, active }: { label: string; active: boolean }) {
+  const { pending } = useLinkStatus();
+  const on = active || pending;
+  return (
+    <span
+      className={`relative inline-block text-[11px] ${
+        on ? "font-semibold text-accent" : "font-medium text-ink2"
+      }`}
+    >
+      {label}
+      {pending && (
+        <span
+          aria-hidden
+          className="absolute left-1/2 -translate-x-1/2 -bottom-2 w-1 h-1 rounded-full bg-accent animate-pulse-dot"
+        />
+      )}
+    </span>
   );
 }

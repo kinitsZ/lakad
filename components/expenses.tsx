@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { addExpense } from "@/app/actions/expenses";
 import { Avatar } from "@/components/ui";
 import type { MemberView } from "@/db/queries";
-import { money, moneyExact, signedMoney } from "@/lib/money";
+import { money, moneyExact } from "@/lib/money";
 
 export type ExpenseRow = {
   id: string;
@@ -80,18 +80,19 @@ export function Expenses({
                 </div>
                 <div className="text-right">
                   <h2 className="font-semibold text-[11px] text-ink2 mb-1 uppercase">
-                    {mine === 0 ? "You're square" : mine > 0 ? "You are owed" : "You owe"}
+                    {mine > 0 ? "You get back" : "You owe"}
                   </h2>
                   <div
                     className={`font-display font-semibold text-[20px] ${
                       mine === 0 ? "text-ink2" : mine > 0 ? "text-ok" : "text-warn"
                     }`}
                   >
-                    {mine === 0 ? moneyExact(0) : signedMoney(mine)}
+                    {mine === 0 ? "Nothing" : moneyExact(mine)}
                   </div>
                 </div>
               </div>
 
+              <h3 className="font-semibold text-[11px] text-ink2 mb-2 uppercase">Balances</h3>
               <div className="flex flex-col gap-[7px]">
                 {others.map((balance) => {
                   const member = byId.get(balance.memberId);
@@ -100,7 +101,7 @@ export function Expenses({
                   return (
                     <div key={balance.memberId} className="flex items-center gap-[9px]">
                       <Avatar member={member} size={22} />
-                      <div className="font-medium text-[12px] w-11 truncate">
+                      <div className="font-medium text-[12px] w-14 truncate">
                         {member.name.split(" ")[0]}
                       </div>
                       <div className="flex-1 h-[7px] rounded bg-surface2 overflow-hidden">
@@ -112,11 +113,13 @@ export function Expenses({
                         />
                       </div>
                       <div
-                        className={`font-semibold text-[12px] w-[58px] text-right ${
+                        className={`font-semibold text-[12px] w-[72px] text-right tabular-nums ${
                           owes ? "text-warn" : balance.cents > 0 ? "text-ok" : "text-ink2"
                         }`}
                       >
-                        {balance.cents === 0 ? "settled" : signedMoney(balance.cents)}
+                        {balance.cents === 0
+                          ? "even"
+                          : `${owes ? "−" : "+"}${moneyExact(balance.cents)}`}
                       </div>
                     </div>
                   );
@@ -127,8 +130,8 @@ export function Expenses({
                 <div className="flex items-center gap-2 bg-warn-soft rounded-xl px-[11px] py-2.5 mt-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-warn" />
                   <div className="font-medium text-[11px] text-ink">
-                    {unpaid} {unpaid === 1 ? "person hasn't" : "people haven't"} paid yet ·
-                    reminder queued
+                    {unpaid} {unpaid === 1 ? "person still owes" : "people still owe"} money ·
+                    reminder scheduled
                   </div>
                 </div>
               )}
@@ -193,6 +196,11 @@ export function Expenses({
   );
 }
 
+// 16px on phones: iOS Safari zooms the page into any field smaller than that.
+const field =
+  "w-full h-11 bg-bg border border-line rounded-xl px-3 text-[16px] lg:text-[14px] outline-none focus:border-accent placeholder:text-ink2/60";
+const fieldLabel = "block font-semibold text-[11px] text-ink2 mb-1.5";
+
 function AddExpenseForm({
   tripId,
   members,
@@ -222,46 +230,56 @@ function AddExpenseForm({
       }
     >
       <div className="flex gap-3">
-        <label className="flex-1">
-          <span className="block font-semibold text-[11px] text-ink2 mb-1.5">What for</span>
-          <input
-            name="title"
-            required
-            placeholder="Deposit, groceries, taxi…"
-            className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-accent"
-          />
+        <label className="flex-1 min-w-0">
+          <span className={fieldLabel}>What for</span>
+          <input name="title" required placeholder="Deposit, groceries, taxi…" className={field} />
         </label>
-        <label className="w-[120px] shrink-0">
-          <span className="block font-semibold text-[11px] text-ink2 mb-1.5">Amount</span>
-          <input
-            name="amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            placeholder="0.00"
-            className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-accent"
-          />
+        <label className="w-[132px] shrink-0">
+          <span className={fieldLabel}>Amount</span>
+          <span className="relative block">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[16px] lg:text-[14px] text-ink2 pointer-events-none">
+              $
+            </span>
+            <input
+              name="amount"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0.01"
+              required
+              placeholder="0.00"
+              className={`${field} pl-7 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+            />
+          </span>
         </label>
       </div>
 
       <label>
-        <span className="block font-semibold text-[11px] text-ink2 mb-1.5">Paid by</span>
-        <select
-          name="paidBy"
-          defaultValue={currentMemberId}
-          className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-[14px] outline-none focus:border-accent"
-        >
-          {members.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.name}
-            </option>
-          ))}
-        </select>
+        <span className={fieldLabel}>Paid by</span>
+        <span className="relative block">
+          <select
+            name="paidBy"
+            defaultValue={currentMemberId}
+            className={`${field} appearance-none pr-9 cursor-pointer`}
+          >
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+          <svg
+            aria-hidden
+            viewBox="0 0 12 12"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3 h-3 text-ink2 pointer-events-none"
+          >
+            <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
       </label>
 
       <fieldset>
-        <legend className="font-semibold text-[11px] text-ink2 mb-1.5">Split between</legend>
+        <legend className={fieldLabel}>Split between</legend>
         <div className="flex flex-wrap gap-2">
           {members.map((member) => (
             <label
@@ -287,14 +305,14 @@ function AddExpenseForm({
         <button
           type="submit"
           disabled={pending}
-          className="bg-accent text-accent-ink rounded-xl px-4 py-2.5 font-semibold text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-60"
+          className="bg-accent text-accent-ink rounded-xl h-11 px-5 font-semibold text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-60"
         >
           {pending ? "Adding…" : "Add expense"}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="border border-line rounded-xl px-4 py-2.5 font-semibold text-[13px] text-ink2 cursor-pointer hover:border-accent"
+          className="border border-line rounded-xl h-11 px-5 font-semibold text-[13px] text-ink2 cursor-pointer hover:border-accent"
         >
           Cancel
         </button>

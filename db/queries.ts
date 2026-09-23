@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import {
@@ -102,22 +102,24 @@ export const getTripContext = cache(
 /* ------------------------------------------------------------ date vote */
 
 export async function getDateVoting(trip: typeof trips.$inferSelect, memberId?: string) {
-  const counts = await availabilityCounts(trip.id);
-  const mine = memberId
-    ? await db
-        .select({ day: dateVotes.day })
-        .from(dateVotes)
-        .where(and(eq(dateVotes.tripId, trip.id), eq(dateVotes.memberId, memberId)))
-    : [];
+  const [counts, mine, [submitted]] = await Promise.all([
+    availabilityCounts(trip.id),
+    memberId
+      ? db
+          .select({ day: dateVotes.day })
+          .from(dateVotes)
+          .where(and(eq(dateVotes.tripId, trip.id), eq(dateVotes.memberId, memberId)))
+      : [],
+    memberId
+      ? db
+          .select({ at: dateVoteSubmissions.submittedAt })
+          .from(dateVoteSubmissions)
+          .where(eq(dateVoteSubmissions.memberId, memberId))
+      : [],
+  ]);
 
   const days = votingDays(trip.votingMonth);
   const best = bestWindow(counts, days, RANGE_LENGTH);
-  const [submitted] = memberId
-    ? await db
-        .select({ at: dateVoteSubmissions.submittedAt })
-        .from(dateVoteSubmissions)
-        .where(eq(dateVoteSubmissions.memberId, memberId))
-    : [];
 
   return {
     counts: Object.fromEntries(counts),
@@ -141,32 +143,27 @@ export type DestinationView = {
 };
 
 export async function getDestinations(tripId: string): Promise<DestinationView[]> {
-  const rows = await db
-    .select({
-      id: destinations.id,
-      name: destinations.name,
-      costPerPerson: destinations.costPerPerson,
-      travel: destinations.travel,
-      note: destinations.note,
-      photoKey: destinations.photoKey,
-      suggestedByName: members.name,
-    })
-    .from(destinations)
-    .leftJoin(members, eq(members.id, destinations.suggestedBy))
-    .where(eq(destinations.tripId, tripId))
-    .orderBy(asc(destinations.createdAt));
-
-  if (!rows.length) return [];
-
-  const votes = await db
-    .select({ destinationId: destinationVotes.destinationId, memberId: destinationVotes.memberId })
-    .from(destinationVotes)
-    .where(
-      inArray(
-        destinationVotes.destinationId,
-        rows.map((r) => r.id),
-      ),
-    );
+  const [rows, votes] = await Promise.all([
+    db
+      .select({
+        id: destinations.id,
+        name: destinations.name,
+        costPerPerson: destinations.costPerPerson,
+        travel: destinations.travel,
+        note: destinations.note,
+        photoKey: destinations.photoKey,
+        suggestedByName: members.name,
+      })
+      .from(destinations)
+      .leftJoin(members, eq(members.id, destinations.suggestedBy))
+      .where(eq(destinations.tripId, tripId))
+      .orderBy(asc(destinations.createdAt)),
+    db
+      .select({ destinationId: destinationVotes.destinationId, memberId: destinationVotes.memberId })
+      .from(destinationVotes)
+      .innerJoin(destinations, eq(destinations.id, destinationVotes.destinationId))
+      .where(eq(destinations.tripId, tripId)),
+  ]);
 
   const byDestination = new Map<string, string[]>();
   for (const vote of votes) {
@@ -215,47 +212,41 @@ export async function getActivities(tripId: string): Promise<ActivityView[]> {
 /* ------------------------------------------------------------- expenses */
 
 export async function getExpenseData(tripId: string, memberIds: string[]) {
-  const expenseRows = await db
-    .select({
-      id: expenses.id,
-      title: expenses.title,
-      amountCents: expenses.amountCents,
-      paidBy: expenses.paidBy,
-      paidByName: members.name,
-      createdAt: expenses.createdAt,
-    })
-    .from(expenses)
-    .leftJoin(members, eq(members.id, expenses.paidBy))
-    .where(eq(expenses.tripId, tripId))
-    .orderBy(desc(expenses.createdAt));
-
-  const splitRows = expenseRows.length
-    ? await db
-        .select({
-          expenseId: expenseSplits.expenseId,
-          memberId: expenseSplits.memberId,
-          shareCents: expenseSplits.shareCents,
-        })
-        .from(expenseSplits)
-        .where(
-          inArray(
-            expenseSplits.expenseId,
-            expenseRows.map((e) => e.id),
-          ),
-        )
-    : [];
-
-  const paymentRows = await db
-    .select({
-      id: payments.id,
-      fromMemberId: payments.fromMemberId,
-      toMemberId: payments.toMemberId,
-      amountCents: payments.amountCents,
-      paidAt: payments.paidAt,
-    })
-    .from(payments)
-    .where(eq(payments.tripId, tripId))
-    .orderBy(desc(payments.paidAt));
+  const [expenseRows, splitRows, paymentRows] = await Promise.all([
+    db
+      .select({
+        id: expenses.id,
+        title: expenses.title,
+        amountCents: expenses.amountCents,
+        paidBy: expenses.paidBy,
+        paidByName: members.name,
+        createdAt: expenses.createdAt,
+      })
+      .from(expenses)
+      .leftJoin(members, eq(members.id, expenses.paidBy))
+      .where(eq(expenses.tripId, tripId))
+      .orderBy(desc(expenses.createdAt)),
+    db
+      .select({
+        expenseId: expenseSplits.expenseId,
+        memberId: expenseSplits.memberId,
+        shareCents: expenseSplits.shareCents,
+      })
+      .from(expenseSplits)
+      .innerJoin(expenses, eq(expenses.id, expenseSplits.expenseId))
+      .where(eq(expenses.tripId, tripId)),
+    db
+      .select({
+        id: payments.id,
+        fromMemberId: payments.fromMemberId,
+        toMemberId: payments.toMemberId,
+        amountCents: payments.amountCents,
+        paidAt: payments.paidAt,
+      })
+      .from(payments)
+      .where(eq(payments.tripId, tripId))
+      .orderBy(desc(payments.paidAt)),
+  ]);
 
   const balances = computeBalances({
     expenses: expenseRows.map((e) => ({ id: e.id, paidBy: e.paidBy, amountCents: e.amountCents })),

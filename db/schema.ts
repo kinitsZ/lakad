@@ -54,9 +54,6 @@ export const members = pgTable(
     tripId: uuid("trip_id")
       .notNull()
       .references(() => trips.id, { onDelete: "cascade" }),
-    sessionToken: text("session_token").references(() => sessions.token, {
-      onDelete: "set null",
-    }),
     name: text("name").notNull(),
     initials: text("initials").notNull(),
     tone: text("tone").notNull().default("neutral"),
@@ -65,10 +62,43 @@ export const members = pgTable(
     email: text("email"),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
+  (table) => [index("members_trip_idx").on(table.tripId)],
+);
+
+/** Which browsers act as which member. A member can be signed in on several devices. */
+export const memberSessions = pgTable(
+  "member_sessions",
+  {
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    sessionToken: text("session_token")
+      .notNull()
+      .references(() => sessions.token, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
   (table) => [
-    index("members_trip_idx").on(table.tripId),
-    index("members_session_idx").on(table.sessionToken),
+    primaryKey({ columns: [table.memberId, table.sessionToken] }),
+    index("member_sessions_token_idx").on(table.sessionToken),
   ],
+);
+
+/**
+ * Single-use, short-lived links that sign another device in as a member.
+ * Only a SHA-256 of the token is stored, so a database leak can't be replayed.
+ */
+export const deviceLinks = pgTable(
+  "device_links",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    memberId: uuid("member_id")
+      .notNull()
+      .references(() => members.id, { onDelete: "cascade" }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("device_links_member_idx").on(table.memberId)],
 );
 
 /* ---------------------------------------------------------- date voting */

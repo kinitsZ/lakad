@@ -76,15 +76,16 @@ export function SettleUp({
       <div className="px-5 lg:px-0 pb-8 lg:pb-0 flex flex-col gap-3">
         {transfers.length ? (
           <p className="bg-surface2 rounded-[16px] px-[15px] lg:px-5 py-[13px] lg:py-4 text-[12px] lg:text-[14px] leading-[1.5] text-ink">
-            Tripsync worked out the fewest payments:{" "}
+            To make everyone even, only{" "}
             <strong>
-              {transfers.length} transfer{transfers.length === 1 ? "" : "s"}
+              {transfers.length} payment{transfers.length === 1 ? " is" : "s are"} needed
             </strong>
-            {naivePayments > transfers.length && ` instead of ${naivePayments}`}.
+            {naivePayments > transfers.length && ` (instead of ${naivePayments})`}. Once one is
+            made, tap &ldquo;Mark as paid&rdquo;.
           </p>
         ) : (
           <p className="bg-ok-soft rounded-[16px] px-[15px] lg:px-5 py-[13px] lg:py-4 text-[12px] lg:text-[14px] text-ink">
-            Everyone is square — nothing left to settle.
+            Everyone&rsquo;s even — nobody owes anything.
           </p>
         )}
 
@@ -158,7 +159,7 @@ export function SettleUp({
                   {name(payment.fromMemberId)} paid {name(payment.toMemberId)}
                 </div>
                 <div className="text-[11px] text-ok">
-                  Settled {payment.paidAt.toLocaleDateString("en-GB", {
+                  Paid {payment.paidAt.toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "short",
                   })}

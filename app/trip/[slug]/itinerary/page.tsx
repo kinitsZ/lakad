@@ -12,13 +12,14 @@ export default async function ItineraryPage({ params }: PageProps<"/trip/[slug]/
 
   const { trip } = context;
   const locked = Boolean(trip.lockedStart && trip.lockedEnd);
-  const voting = locked ? null : await getDateVoting(trip, context.currentMember.id);
+  const [voting, activities] = await Promise.all([
+    locked ? null : getDateVoting(trip, context.currentMember.id),
+    getActivities(trip.id),
+  ]);
 
   const days = locked
     ? daysBetween(trip.lockedStart!, trip.lockedEnd!)
     : (voting?.best?.days ?? []);
-
-  const activities = await getActivities(trip.id);
 
   return (
     <Itinerary

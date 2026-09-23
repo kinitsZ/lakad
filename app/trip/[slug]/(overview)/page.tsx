@@ -29,6 +29,7 @@ export default async function TripDashboardPage({ params }: PageProps<"/trip/[sl
         members={context.members}
         summary={summary}
         inviteUrl={inviteUrl}
+        needsEmail={Boolean(context.currentMember?.noAccount)}
       />
       <DashboardDesktop
         slug={slug}
@@ -36,6 +37,7 @@ export default async function TripDashboardPage({ params }: PageProps<"/trip/[sl
         members={context.members}
         summary={summary}
         isOrganiser={Boolean(context.currentMember?.isOrganiser)}
+        needsEmail={Boolean(context.currentMember?.noAccount)}
       />
     </>
   );

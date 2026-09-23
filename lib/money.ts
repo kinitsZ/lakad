@@ -9,9 +9,6 @@ export const moneyExact = (cents: number) =>
     maximumFractionDigits: 2,
   })}`;
 
-export const signedMoney = (cents: number) =>
-  `${cents < 0 ? "−" : "+"}${moneyExact(cents)}`;
-
 /** Parses "1,200.50" or "$1200.5" into cents. Returns null if unusable. */
 export function parseMoney(input: string): number | null {
   const cleaned = input.replace(/[^0-9.]/g, "");

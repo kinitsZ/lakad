@@ -5,7 +5,7 @@ import { TripBanner } from "@/components/trip-banner";
 import { AvatarStack } from "@/components/ui";
 import { getMembers, getTripBySlug } from "@/db/queries";
 import { syncTrip } from "@/lib/automations";
-import { countdownLabel } from "@/lib/format";
+import { countdownLabel, rangeLabel } from "@/lib/format";
 import { getCurrentMember } from "@/lib/session";
 
 export async function generateMetadata({ params }: PageProps<"/join/[code]">) {
@@ -82,10 +82,23 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
               </div>
             </div>
             <div className="flex-1 bg-surface2 rounded-[14px] lg:rounded-[18px] p-3 lg:p-5">
-              <div className="font-semibold text-[12px] text-ink2 mb-1">Closes in</div>
-              <div className="font-semibold text-[14px] lg:text-[16px] text-accent">
-                {countdownLabel(trip.votingDeadline)}
-              </div>
+              {trip.lockedStart && trip.lockedEnd ? (
+                <>
+                  <div className="font-semibold text-[12px] text-ink2 mb-1">Dates</div>
+                  <div className="font-semibold text-[14px] lg:text-[16px] text-accent">
+                    {rangeLabel(trip.lockedStart, trip.lockedEnd)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="font-semibold text-[12px] text-ink2 mb-1">
+                    {trip.phase === "voting" ? "Closes in" : "Voting"}
+                  </div>
+                  <div className="font-semibold text-[14px] lg:text-[16px] text-accent">
+                    {trip.phase === "voting" ? countdownLabel(trip.votingDeadline) : "Closed"}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
