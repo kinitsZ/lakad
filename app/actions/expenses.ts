@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq } from "drizzle-orm";
-import { refresh } from "next/cache";
+import { refreshTrip } from "@/app/actions/revalidate";
 import { z } from "zod";
 import { db } from "@/db";
 import { expenseSplits, expenses, members, payments } from "@/db/schema";
@@ -72,7 +72,7 @@ export async function addExpense(tripId: string, formData: FormData) {
     body: `${money(parsed.data.amountCents)} split ${participants.length} ways`,
   });
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -109,7 +109,7 @@ export async function recordPayment(tripId: string, input: unknown) {
     body: money(parsed.data.amountCents),
   });
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -118,7 +118,7 @@ export async function deleteExpense(tripId: string, expenseId: string) {
   await db
     .delete(expenses)
     .where(and(eq(expenses.id, expenseId), eq(expenses.tripId, tripId)));
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -147,6 +147,6 @@ export async function remindDebtor(
       .slice(0, 10)}`,
   });
 
-  refresh();
+  refreshTrip();
   return { ok: true, queuedFor: debtor.name.split(" ")[0] };
 }

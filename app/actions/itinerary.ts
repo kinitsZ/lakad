@@ -1,6 +1,6 @@
 "use server";
 
-import { refresh } from "next/cache";
+import { refreshTrip } from "@/app/actions/revalidate";
 import { z } from "zod";
 import { db } from "@/db";
 import { activities } from "@/db/schema";
@@ -45,6 +45,6 @@ export async function addActivity(tripId: string, formData: FormData) {
     body: `${timeLabel(parsed.data.startTime)} · ${parsed.data.day}`,
   });
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }

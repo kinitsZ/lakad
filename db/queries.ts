@@ -10,6 +10,7 @@ import {
   destinations,
   expenseSplits,
   expenses,
+  memberSessions,
   members,
   payments,
   trips,
@@ -41,6 +42,25 @@ export type TripContext = {
   members: MemberView[];
   currentMember: MemberView | null;
 };
+
+/** Every trip this browser has joined, most recently active first. */
+export async function getTripsForSession(token: string) {
+  return db
+    .select({
+      slug: trips.slug,
+      name: trips.name,
+      phase: trips.phase,
+      timeframeLabel: trips.timeframeLabel,
+      lockedStart: trips.lockedStart,
+      lockedEnd: trips.lockedEnd,
+      memberName: members.name,
+    })
+    .from(memberSessions)
+    .innerJoin(members, eq(members.id, memberSessions.memberId))
+    .innerJoin(trips, eq(trips.id, members.tripId))
+    .where(eq(memberSessions.sessionToken, token))
+    .orderBy(desc(trips.updatedAt));
+}
 
 export const getTripBySlug = cache(async (slug: string) => {
   const [trip] = await db.select().from(trips).where(eq(trips.slug, slug)).limit(1);

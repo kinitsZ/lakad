@@ -2,7 +2,10 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogoMark } from "@/components/logo";
 import { Cover } from "@/components/ui";
+import { getTripsForSession } from "@/db/queries";
+import { rangeLabel } from "@/lib/format";
 import { photos } from "@/lib/images";
+import { getSessionToken } from "@/lib/session";
 
 const steps = [
   {
@@ -19,7 +22,10 @@ const steps = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const token = await getSessionToken();
+  const myTrips = token ? await getTripsForSession(token) : [];
+
   return (
     <div className="w-full">
       <header className="mx-auto w-full max-w-[430px] lg:max-w-[1280px] flex items-center justify-between px-[22px] lg:px-6 py-2.5 lg:py-4">
@@ -47,6 +53,44 @@ export default function LandingPage() {
       </header>
 
       <main className="mx-auto w-full max-w-[430px] lg:max-w-[1280px] px-[22px] lg:px-6 pt-[26px] lg:pt-14 pb-12 lg:pb-20">
+        {myTrips.length > 0 && (
+          <section className="mb-8 lg:mb-14" aria-labelledby="your-trips">
+            <h2
+              id="your-trips"
+              className="font-semibold text-[11px] lg:text-[12px] tracking-[0.12em] uppercase text-ink2 mb-3"
+            >
+              Your trips
+            </h2>
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-2.5 lg:gap-3.5">
+              {myTrips.map((trip) => (
+                <Link
+                  key={trip.slug}
+                  href={`/trip/${trip.slug}`}
+                  className="flex items-center justify-between gap-3 bg-surface border border-line rounded-[16px] px-4 py-3.5 hover:border-accent"
+                >
+                  <div className="min-w-0">
+                    <div className="font-display font-semibold text-[16px] truncate">
+                      {trip.name}
+                    </div>
+                    <div className="text-[12px] text-ink2 truncate">
+                      {[
+                        trip.phase[0].toUpperCase() + trip.phase.slice(1),
+                        trip.lockedStart && trip.lockedEnd
+                          ? rangeLabel(trip.lockedStart, trip.lockedEnd)
+                          : trip.timeframeLabel,
+                        `as ${trip.memberName.split(" ")[0]}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </div>
+                  </div>
+                  <span className="shrink-0 font-semibold text-[12px] text-accent">Open</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16 lg:items-center">
           <div>
             <p className="inline-flex items-center gap-2 bg-accent-soft text-accent rounded-full px-3 py-1.5 font-semibold text-[12px] lg:text-[13px] mb-[18px]">

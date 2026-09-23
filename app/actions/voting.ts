@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
-import { refresh } from "next/cache";
+import { refreshTrip } from "@/app/actions/revalidate";
 import { z } from "zod";
 import { db } from "@/db";
 import {
@@ -50,7 +50,7 @@ export async function submitDateVote(tripId: string, days: string[]) {
     body: "Date voting",
   });
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -84,7 +84,7 @@ export async function toggleDestinationVote(tripId: string, destinationId: strin
           eq(destinationVotes.memberId, member.id),
         ),
       );
-    refresh();
+    refreshTrip();
     return { ok: true };
   }
 
@@ -104,7 +104,7 @@ export async function toggleDestinationVote(tripId: string, destinationId: strin
     .values({ tripId, destinationId, memberId: member.id })
     .onConflictDoNothing();
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -141,7 +141,7 @@ export async function suggestDestination(tripId: string, formData: FormData) {
     body: parsed.data.note,
   });
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -155,6 +155,6 @@ export async function lockDatesNow(tripId: string) {
     .set({ votingDeadline: new Date(), updatedAt: new Date() })
     .where(and(eq(trips.id, tripId), eq(trips.phase, "voting")));
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }

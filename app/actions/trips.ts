@@ -1,7 +1,7 @@
 "use server";
 
 import { eq, sql } from "drizzle-orm";
-import { refresh } from "next/cache";
+import { refreshTrip } from "@/app/actions/revalidate";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
@@ -142,5 +142,5 @@ export async function setAutomations(tripId: string, enabled: boolean) {
     .update(trips)
     .set({ automationsEnabled: enabled, updatedAt: new Date() })
     .where(eq(trips.id, tripId));
-  refresh();
+  refreshTrip();
 }

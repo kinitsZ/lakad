@@ -1,7 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { refresh } from "next/cache";
+import { refreshTrip } from "@/app/actions/revalidate";
 import { z } from "zod";
 import { db } from "@/db";
 import { members, updateReads, updates } from "@/db/schema";
@@ -32,7 +32,7 @@ export async function setMyEmail(tripId: string, formData: FormData) {
     .set({ email: parsed.data || null })
     .where(eq(members.id, member.id));
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
 
@@ -47,6 +47,6 @@ export async function markAllRead(tripId: string) {
     .values(rows.map((row) => ({ updateId: row.id, memberId: member.id })))
     .onConflictDoNothing();
 
-  refresh();
+  refreshTrip();
   return { ok: true };
 }
