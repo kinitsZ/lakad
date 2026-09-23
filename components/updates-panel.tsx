@@ -31,6 +31,12 @@ export function UpdatesPanel({
 }) {
   const [pending, start] = useTransition();
   const [automations, setLocalAutomations] = useState(automationsEnabled);
+  const [showAll, setShowAll] = useState(false);
+  // On phones the settings cards sit under the list, so keep it short until asked.
+  const MOBILE_LIMIT = 5;
+  const position = new Map(updates.map((u, i) => [u.id, i]));
+  const hiddenOnMobile = (id: string) => !showAll && (position.get(id) ?? 0) >= MOBILE_LIMIT;
+  const hiddenCount = Math.max(0, updates.length - MOBILE_LIMIT);
   const byId = new Map(members.map((m) => [m.id, m]));
   const hasUnread = updates.some((u) => u.unread);
 
@@ -70,15 +76,21 @@ export function UpdatesPanel({
           )}
           {groups.map(([group, items]) => {
             if (!items.length) return null;
+            const allHidden = items.every((u) => hiddenOnMobile(u.id));
             return (
-              <section key={group} className="flex flex-col gap-2.5">
+              <section
+                key={group}
+                className={`flex-col gap-2.5 stagger-children ${allHidden ? "hidden lg:flex" : "flex"}`}
+              >
                 <div className="pl-1 mt-1.5 first:mt-0">
                   <SectionLabel>{group}</SectionLabel>
                 </div>
                 {items.map((update) => (
                   <article
                     key={update.id}
-                    className={`rounded-[18px] px-[15px] py-3.5 flex gap-3 ${
+                    className={`rounded-[18px] px-[15px] py-3.5 gap-3 ${
+                      hiddenOnMobile(update.id) ? "hidden lg:flex" : "flex"
+                    } ${
                       update.unread && update.automated
                         ? "bg-accent-soft"
                         : "bg-surface border border-line"
@@ -113,6 +125,15 @@ export function UpdatesPanel({
               </section>
             );
           })}
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="lg:hidden self-center font-semibold text-[12px] text-accent px-3 py-2 cursor-pointer"
+            >
+              {showAll ? "Show fewer" : `Show all ${updates.length} updates`}
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col gap-2.5 lg:gap-4">
@@ -142,12 +163,12 @@ export function UpdatesPanel({
                 start(() => void setAutomations(tripId, next));
               }}
               className={`w-[38px] h-[22px] shrink-0 rounded-full flex items-center p-0.5 cursor-pointer ${
-                automations ? "bg-accent justify-end" : "bg-line justify-start"
+                automations ? "bg-accent" : "bg-line"
               }`}
             >
               <span
-                className={`w-[18px] h-[18px] rounded-full ${
-                  automations ? "bg-accent-ink" : "bg-surface"
+                className={`w-[18px] h-[18px] rounded-full transition-transform duration-200 ease-out ${
+                  automations ? "bg-accent-ink translate-x-4" : "bg-surface translate-x-0"
                 }`}
               />
             </button>

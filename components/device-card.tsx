@@ -75,7 +75,7 @@ export function DeviceCard({ tripId }: { tripId: string }) {
             . Only share it with yourself — it signs in as you.
           </p>
           {/* QR codes need dark-on-light to scan, whatever the theme. */}
-          <div className="bg-white rounded-[14px] p-2 w-[168px] mb-3">
+          <div className="bg-white rounded-[14px] p-2 w-[168px] mb-3 animate-rise">
             {/* eslint-disable-next-line @next/next/no-img-element -- server-generated data URI */}
             <img src={link.qr} alt="QR code for your device link" width={152} height={152} />
           </div>

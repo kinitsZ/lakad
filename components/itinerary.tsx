@@ -115,7 +115,7 @@ export function Itinerary({
               </div>
 
               {dayActivities.length ? (
-                <div className="flex flex-col gap-[9px]">
+                <div className="flex flex-col gap-[9px] stagger-children">
                   {dayActivities.map((activity) => (
                     <ActivityRow
                       key={activity.id}

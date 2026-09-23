@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DateVoting } from "@/components/date-voting";
 import { getDateVoting, getTripContext } from "@/db/queries";
 import { deadlineLabel } from "@/lib/format";
+import { PageTransition } from "@/components/page-transition";
 
 export const metadata = { title: "Date voting · Lakad" };
 
@@ -14,17 +15,19 @@ export default async function DatesPage({ params }: PageProps<"/trip/[slug]/date
   const organiser = context.members.find((m) => m.isOrganiser);
 
   return (
-    <DateVoting
-      slug={slug}
-      tripId={context.trip.id}
-      votingMonth={context.trip.votingMonth}
-      counts={voting.counts}
-      initialMyDays={voting.myDays}
-      members={context.members}
-      organiserName={organiser?.name.split(" ")[0] ?? "the organiser"}
-      deadlineLabel={deadlineLabel(context.trip.votingDeadline)}
-      alreadySubmitted={voting.submitted}
-      locked={context.trip.phase !== "voting"}
-    />
+    <PageTransition>
+      <DateVoting
+        slug={slug}
+        tripId={context.trip.id}
+        votingMonth={context.trip.votingMonth}
+        counts={voting.counts}
+        initialMyDays={voting.myDays}
+        members={context.members}
+        organiserName={organiser?.name.split(" ")[0] ?? "the organiser"}
+        deadlineLabel={deadlineLabel(context.trip.votingDeadline)}
+        alreadySubmitted={voting.submitted}
+        locked={context.trip.phase !== "voting"}
+      />
+    </PageTransition>
   );
 }

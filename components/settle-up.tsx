@@ -22,6 +22,7 @@ export function SettleUp({
   transfers,
   payments,
   members,
+  currentMemberId,
   naivePayments,
 }: {
   slug: string;
@@ -29,6 +30,7 @@ export function SettleUp({
   transfers: Transfer[];
   payments: SettledPayment[];
   members: MemberView[];
+  currentMemberId: string;
   naivePayments: number;
 }) {
   const [pending, start] = useTransition();
@@ -36,6 +38,8 @@ export function SettleUp({
   const [reminded, setReminded] = useState<string | null>(null);
   const byId = new Map(members.map((m) => [m.id, m]));
   const name = (id: string) => byId.get(id)?.name.split(" ")[0] ?? "Someone";
+  const who = (id: string) => (id === currentMemberId ? "You" : name(id));
+  const whom = (id: string) => (id === currentMemberId ? "you" : name(id));
 
   function markPaid(transfer: Transfer) {
     setError(null);
@@ -48,11 +52,7 @@ export function SettleUp({
   function remind(transfer: Transfer) {
     setError(null);
     start(async () => {
-      const result = await remindDebtor(
-        tripId,
-        transfer.fromMemberId,
-        transfer.amountCents,
-      );
+      const result = await remindDebtor(tripId, transfer.fromMemberId, transfer.amountCents);
       if (result?.error) setError(result.error);
       else setReminded(transfer.fromMemberId);
     });
@@ -63,6 +63,7 @@ export function SettleUp({
       <header className="px-5 lg:px-0 pt-3 lg:pt-0 pb-2.5 lg:pb-6 flex items-center justify-between">
         <Link
           href={`/trip/${slug}/expenses`}
+          transitionTypes={["nav-back"]}
           className="font-medium text-[14px] text-ink2 hover:text-ink lg:order-2"
         >
           Back to expenses
@@ -93,26 +94,30 @@ export function SettleUp({
           <p className="bg-warn-soft text-ink rounded-[14px] px-3.5 py-3 text-[12px]">{error}</p>
         )}
 
-        <div className="flex flex-col gap-2.5">
-          {transfers.map((transfer, index) => {
+        <div className="flex flex-col gap-2.5 stagger-children">
+          {transfers.map((transfer) => {
             const from = byId.get(transfer.fromMemberId);
             const to = byId.get(transfer.toMemberId);
-            const expanded = index === 0;
+            // Only the two people involved can confirm it; anyone but the payer can nudge.
+            const canMarkPaid =
+              currentMemberId === transfer.fromMemberId || currentMemberId === transfer.toMemberId;
+            const canRemind = currentMemberId !== transfer.fromMemberId;
+            const expanded = canMarkPaid || canRemind;
             return (
               <div
                 key={`${transfer.fromMemberId}-${transfer.toMemberId}`}
                 className="bg-surface border border-line rounded-[18px] px-[15px] lg:px-5 py-3.5 lg:py-4"
               >
-                <div
-                  className={`flex items-center gap-2.5 lg:gap-3.5 ${expanded ? "mb-2.5" : ""}`}
-                >
+                <div className={`flex items-center gap-2.5 lg:gap-3.5 ${expanded ? "mb-2.5" : ""}`}>
                   <Avatar member={from} size={30} />
                   <span className="font-semibold text-[13px] text-ink2" aria-hidden>
                     →
                   </span>
                   <Avatar member={to} size={30} />
                   <div className="flex-1 font-medium text-[13px] min-w-0 truncate">
-                    {name(transfer.fromMemberId)} pays {name(transfer.toMemberId)}
+                    {who(transfer.fromMemberId)}{" "}
+                    {transfer.fromMemberId === currentMemberId ? "pay" : "pays"}{" "}
+                    {whom(transfer.toMemberId)}
                   </div>
                   <div className="font-display font-semibold text-[15px] shrink-0">
                     {moneyExact(transfer.amountCents)}
@@ -120,24 +125,28 @@ export function SettleUp({
                 </div>
                 {expanded && (
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      disabled={pending}
-                      onClick={() => markPaid(transfer)}
-                      className="bg-ink text-bg rounded-[11px] px-[13px] py-2 font-semibold text-[11px] cursor-pointer hover:opacity-90 disabled:opacity-60"
-                    >
-                      {pending ? "Saving…" : "Mark as paid"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={pending || reminded === transfer.fromMemberId}
-                      onClick={() => remind(transfer)}
-                      className="border border-line rounded-[11px] px-[13px] py-2 font-semibold text-[11px] text-ink2 cursor-pointer hover:border-accent hover:text-ink disabled:opacity-60 disabled:cursor-default"
-                    >
-                      {reminded === transfer.fromMemberId
-                        ? "Reminder queued ✓"
-                        : `Remind ${name(transfer.fromMemberId)}`}
-                    </button>
+                    {canMarkPaid && (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => markPaid(transfer)}
+                        className="bg-ink text-bg rounded-[11px] px-[13px] py-2 font-semibold text-[11px] cursor-pointer hover:opacity-90 disabled:opacity-60"
+                      >
+                        {pending ? "Saving…" : "Mark as paid"}
+                      </button>
+                    )}
+                    {canRemind && (
+                      <button
+                        type="button"
+                        disabled={pending || reminded === transfer.fromMemberId}
+                        onClick={() => remind(transfer)}
+                        className="border border-line rounded-[11px] px-[13px] py-2 font-semibold text-[11px] text-ink2 cursor-pointer hover:border-accent hover:text-ink disabled:opacity-60 disabled:cursor-default"
+                      >
+                        {reminded === transfer.fromMemberId
+                          ? "Reminder queued ✓"
+                          : `Remind ${name(transfer.fromMemberId)}`}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -159,7 +168,8 @@ export function SettleUp({
                   {name(payment.fromMemberId)} paid {name(payment.toMemberId)}
                 </div>
                 <div className="text-[11px] text-ok">
-                  Paid {payment.paidAt.toLocaleDateString("en-GB", {
+                  Paid{" "}
+                  {payment.paidAt.toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "short",
                   })}

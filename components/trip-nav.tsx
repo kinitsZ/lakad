@@ -4,6 +4,7 @@ import Link, { useLinkStatus } from "next/link";
 import { LogoMark } from "@/components/logo";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { directionTo } from "@/components/page-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar } from "@/components/ui";
 import type { MemberView } from "@/db/queries";
@@ -71,6 +72,9 @@ export function TripTopNav({
 }) {
   const segment = useSegment(slug);
   const [copied, setCopied] = useState(false);
+  const desktopIndex = desktopLinks.findIndex(
+    (link) => segment === link.href || (link.href && segment.startsWith(`${link.href}/`)),
+  );
 
   async function copyInvite() {
     try {
@@ -91,12 +95,13 @@ export function TripTopNav({
           <div className="font-display font-bold text-[16px] text-ink">Lakad</div>
         </Link>
         <nav className="flex gap-5 text-[13px] font-medium">
-          {desktopLinks.map((link) => {
+          {desktopLinks.map((link, index) => {
             const active = segment === link.href;
             return (
               <Link
                 key={link.label}
                 href={`/trip/${slug}${link.href}`}
+                transitionTypes={directionTo(desktopIndex, index)}
                 aria-current={active ? "page" : undefined}
                 className={
                   active ? "text-ink font-semibold" : "text-ink2 hover:text-ink"
@@ -126,16 +131,22 @@ export function TripTopNav({
 
 export function TripTabBar({ slug }: { slug: string }) {
   const segment = useSegment(slug);
+  const current = tabs.findIndex(
+    (tab) =>
+      tab.matches.includes(segment) ||
+      (tab.href === "/expenses" && segment.startsWith("/expenses/")),
+  );
 
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-10 border-t border-line bg-surface">
       <div className="mx-auto max-w-[430px] flex">
-        {tabs.map((tab) => {
-          const active = tab.matches.includes(segment);
+        {tabs.map((tab, index) => {
+          const active = index === current;
           return (
             <Link
               key={tab.label}
               href={`/trip/${slug}${tab.href}`}
+              transitionTypes={directionTo(current, index)}
               aria-current={active ? "page" : undefined}
               className="flex-1 pt-3 pb-[22px] text-center [-webkit-tap-highlight-color:transparent] active:opacity-60 transition-opacity"
             >

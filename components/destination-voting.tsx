@@ -91,7 +91,7 @@ export function DestinationVoting({
                 onToggle={() => vote(leading.id)}
               />
               {rest.length > 0 && (
-                <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2">
+                <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 stagger-children">
                   {rest.map((destination) => (
                     <CompactCard
                       key={destination.id}
@@ -367,7 +367,7 @@ function ResultsPanel({
             </div>
             <div className="flex-1 h-2 rounded-[5px] bg-surface2 overflow-hidden">
               <div
-                className={`h-full ${barClass[i] ?? "bg-h1"}`}
+                className={`h-full ${barClass[i] ?? "bg-h1"} origin-left animate-grow transition-[width] duration-500`}
                 style={{ width: `${(destination.voterIds.length / total) * 100}%` }}
               />
             </div>

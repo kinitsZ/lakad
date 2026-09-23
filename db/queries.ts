@@ -281,8 +281,14 @@ export async function getExpenseData(tripId: string, memberIds: string[]) {
   });
 
   const splitCount = new Map<string, number>();
+  const shareRange = new Map<string, { min: number; max: number }>();
   for (const split of splitRows) {
     splitCount.set(split.expenseId, (splitCount.get(split.expenseId) ?? 0) + 1);
+    const range = shareRange.get(split.expenseId);
+    shareRange.set(split.expenseId, {
+      min: Math.min(range?.min ?? Infinity, split.shareCents),
+      max: Math.max(range?.max ?? -Infinity, split.shareCents),
+    });
   }
 
   return {
@@ -290,6 +296,8 @@ export async function getExpenseData(tripId: string, memberIds: string[]) {
       ...e,
       splitCount: splitCount.get(e.id) ?? 0,
       perPersonCents: Math.round(e.amountCents / Math.max(splitCount.get(e.id) ?? 1, 1)),
+      // Even splits differ by at most a cent (the remainder goes to someone).
+      evenSplit: (shareRange.get(e.id)?.max ?? 0) - (shareRange.get(e.id)?.min ?? 0) <= 1,
     })),
     payments: paymentRows,
     balances,

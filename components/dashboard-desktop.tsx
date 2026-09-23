@@ -105,7 +105,7 @@ export function DashboardDesktop({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-2 gap-3.5 stagger-children">
             <DesktopCard
               label="Dates"
               action={{ label: "Vote", href: `/trip/${slug}/dates` }}
@@ -138,7 +138,7 @@ export function DashboardDesktop({
                     <div className="font-medium text-[12px] w-[52px] truncate">{bar.name}</div>
                     <div className="flex-1 h-2 rounded-[5px] bg-surface2 overflow-hidden">
                       <div
-                        className={`h-full ${barClass[i] ?? "bg-h1"}`}
+                        className={`h-full ${barClass[i] ?? "bg-h1"} origin-left animate-grow transition-[width] duration-500`}
                         style={{ width: `${bar.percent}%` }}
                       />
                     </div>
@@ -209,7 +209,7 @@ export function DashboardDesktop({
           </div>
         </div>
 
-        <aside className="flex flex-col gap-3.5">
+        <aside className="flex flex-col gap-3.5 stagger-children">
           {needsEmail && <EmailNudge slug={slug} />}
           <div className="bg-surface border border-line rounded-[20px] p-[18px]">
             <div className="flex items-center justify-between mb-3.5">
@@ -294,7 +294,7 @@ function DesktopCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-surface border border-line rounded-[20px] p-[18px]">
+    <div className="bg-surface border border-line rounded-[20px] p-[18px] transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(0,0,0,.08)]">
       <div className="flex justify-between mb-2.5">
         <div className="font-semibold text-[12px] text-ink2 tracking-[0.08em] uppercase">
           {label}

@@ -100,7 +100,7 @@ export function DashboardMobile({
 
         {needsEmail && <EmailNudge slug={slug} className="mb-3" />}
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5 stagger-children">
           <SummaryCard
             href={`/trip/${slug}/dates`}
             label="Dates"
@@ -190,7 +190,7 @@ function SummaryCard({
   return (
     <Link
       href={href}
-      className="bg-surface border border-line rounded-[18px] p-3.5 hover:border-accent"
+      className="bg-surface border border-line rounded-[18px] p-3.5 hover:border-accent active:scale-[0.98]"
     >
       <div className="font-semibold text-[11px] uppercase text-ink2 mb-1.5">{label}</div>
       <div className="font-display font-semibold text-[17px] mb-1.5">{value}</div>

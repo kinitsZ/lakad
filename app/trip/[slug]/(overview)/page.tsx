@@ -4,6 +4,7 @@ import { DashboardDesktop } from "@/components/dashboard-desktop";
 import { DashboardMobile } from "@/components/dashboard-mobile";
 import { getDashboard } from "@/db/dashboard";
 import { getTripContext } from "@/db/queries";
+import { PageTransition } from "@/components/page-transition";
 
 export async function generateMetadata({ params }: PageProps<"/trip/[slug]">) {
   const { slug } = await params;
@@ -24,23 +25,25 @@ export default async function TripDashboardPage({ params }: PageProps<"/trip/[sl
   const inviteUrl = `${protocol}://${host}/join/${context.trip.inviteCode}`;
 
   return (
-    <>
-      <DashboardMobile
-        slug={slug}
-        trip={context.trip}
-        members={context.members}
-        summary={summary}
-        inviteUrl={inviteUrl}
-        needsEmail={Boolean(context.currentMember?.noAccount)}
-      />
-      <DashboardDesktop
-        slug={slug}
-        trip={context.trip}
-        members={context.members}
-        summary={summary}
-        isOrganiser={Boolean(context.currentMember?.isOrganiser)}
-        needsEmail={Boolean(context.currentMember?.noAccount)}
-      />
-    </>
+    <PageTransition>
+      <>
+        <DashboardMobile
+          slug={slug}
+          trip={context.trip}
+          members={context.members}
+          summary={summary}
+          inviteUrl={inviteUrl}
+          needsEmail={Boolean(context.currentMember?.noAccount)}
+        />
+        <DashboardDesktop
+          slug={slug}
+          trip={context.trip}
+          members={context.members}
+          summary={summary}
+          isOrganiser={Boolean(context.currentMember?.isOrganiser)}
+          needsEmail={Boolean(context.currentMember?.noAccount)}
+        />
+      </>
+    </PageTransition>
   );
 }

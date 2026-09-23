@@ -15,6 +15,7 @@ export type ExpenseRow = {
   paidByName: string | null;
   splitCount: number;
   perPersonCents: number;
+  evenSplit: boolean;
 };
 
 export function Expenses({
@@ -93,7 +94,7 @@ export function Expenses({
               </div>
 
               <h3 className="font-semibold text-[11px] text-ink2 mb-2 uppercase">Balances</h3>
-              <div className="flex flex-col gap-[7px]">
+              <div className="flex flex-col gap-[7px] stagger-children">
                 {others.map((balance) => {
                   const member = byId.get(balance.memberId);
                   const owes = balance.cents < 0;
@@ -106,7 +107,7 @@ export function Expenses({
                       </div>
                       <div className="flex-1 h-[7px] rounded bg-surface2 overflow-hidden">
                         <div
-                          className={`h-full ${owes ? "bg-warn" : "bg-ok"}`}
+                          className={`h-full ${owes ? "bg-warn" : "bg-ok"} origin-left animate-grow transition-[width] duration-500`}
                           style={{
                             width: `${Math.round((Math.abs(balance.cents) / widest) * 100)}%`,
                           }}
@@ -137,7 +138,7 @@ export function Expenses({
               )}
             </section>
 
-            <section className="flex flex-col gap-[9px] lg:col-start-1 lg:row-start-1 lg:row-span-2">
+            <section className="flex flex-col gap-[9px] lg:col-start-1 lg:row-start-1 lg:row-span-2 stagger-children">
               <h2 className="sr-only">Expenses</h2>
               {adding && (
                 <AddExpenseForm
@@ -160,8 +161,10 @@ export function Expenses({
                         {expense.title}
                       </div>
                       <div className="text-[11px] text-ink2">
-                        {payer?.name.split(" ")[0] ?? "Someone"} paid · split{" "}
-                        {expense.splitCount} ways
+                        {payer?.name.split(" ")[0] ?? "Someone"} paid ·{" "}
+                        {expense.evenSplit
+                          ? `split ${expense.splitCount} ways`
+                          : `custom split, ${expense.splitCount} people`}
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -169,7 +172,7 @@ export function Expenses({
                         {money(expense.amountCents)}
                       </div>
                       <div className="text-[11px] text-ink2">
-                        {money(expense.perPersonCents)} each
+                        {expense.evenSplit ? `${money(expense.perPersonCents)} each` : "varies"}
                       </div>
                     </div>
                   </div>
@@ -180,6 +183,7 @@ export function Expenses({
             {transferCount > 0 && (
               <Link
                 href={`/trip/${slug}/expenses/settle`}
+                transitionTypes={["nav-forward"]}
                 className="bg-accent text-accent-ink rounded-[16px] p-[15px] lg:p-[18px] flex items-center justify-between gap-3 hover:opacity-90 lg:col-start-2 lg:row-start-2"
               >
                 <div className="font-semibold text-[15px]">Settle up</div>
@@ -214,15 +218,39 @@ function AddExpenseForm({
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [amount, setAmount] = useState("");
+  const [selected, setSelected] = useState(() => new Set(members.map((m) => m.id)));
+  const [mode, setMode] = useState<"even" | "custom">("even");
+  const [shares, setShares] = useState<Record<string, string>>({});
+
+  const totalCents = toCents(amount);
+  const chosen = members.filter((m) => selected.has(m.id));
+  const assignedCents = chosen.reduce((sum, m) => sum + (toCents(shares[m.id] ?? "") || 0), 0);
+  const leftCents = (totalCents || 0) - assignedCents;
+  const customReady = mode === "even" || (totalCents > 0 && leftCents === 0);
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <form
-      className="bg-surface border border-line rounded-[16px] p-4 flex flex-col gap-3"
+      className="bg-surface border border-line rounded-[16px] p-4 flex flex-col gap-3 animate-rise"
       action={(formData) =>
         start(async () => {
           setError(null);
-          const amount = Number(formData.get("amount"));
-          formData.set("amountCents", String(Math.round(amount * 100)));
+          formData.set("amountCents", String(totalCents));
+          if (mode === "custom") {
+            const custom = Object.fromEntries(
+              chosen.map((m) => [m.id, toCents(shares[m.id] ?? "") || 0]),
+            );
+            formData.set("customShares", JSON.stringify(custom));
+          }
           const result = await addExpense(tripId, formData);
           if (result?.error) setError(result.error);
           else onDone();
@@ -236,21 +264,13 @@ function AddExpenseForm({
         </label>
         <label className="w-[132px] shrink-0">
           <span className={fieldLabel}>Amount</span>
-          <span className="relative block">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[16px] lg:text-[14px] text-ink2 pointer-events-none">
-              $
-            </span>
-            <input
-              name="amount"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0.01"
-              required
-              placeholder="0.00"
-              className={`${field} pl-7 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
-            />
-          </span>
+          <MoneyInput
+            name="amount"
+            required
+            value={amount}
+            onChange={setAmount}
+            ariaLabel="Amount"
+          />
         </label>
       </div>
 
@@ -273,13 +293,38 @@ function AddExpenseForm({
             viewBox="0 0 12 12"
             className="absolute right-3.5 top-1/2 -translate-y-1/2 w-3 h-3 text-ink2 pointer-events-none"
           >
-            <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M2.5 4.5 6 8l3.5-3.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </span>
       </label>
 
       <fieldset>
-        <legend className={fieldLabel}>Split between</legend>
+        <div className="flex items-center justify-between mb-1.5">
+          <legend className="font-semibold text-[11px] text-ink2">Split between</legend>
+          <div className="flex bg-bg border border-line rounded-full p-0.5" role="radiogroup">
+            {(["even", "custom"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="radio"
+                aria-checked={mode === option}
+                onClick={() => setMode(option)}
+                className={`rounded-full px-2.5 py-1 font-semibold text-[11px] cursor-pointer ${
+                  mode === option ? "bg-accent text-accent-ink" : "text-ink2"
+                }`}
+              >
+                {option === "even" ? "Split evenly" : "Custom amounts"}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {members.map((member) => (
             <label
@@ -290,13 +335,52 @@ function AddExpenseForm({
                 type="checkbox"
                 name="splitBetween"
                 value={member.id}
-                defaultChecked
+                checked={selected.has(member.id)}
+                onChange={() => toggle(member.id)}
                 className="accent-accent"
               />
               {member.name.split(" ")[0]}
             </label>
           ))}
         </div>
+
+        {mode === "even" && totalCents > 0 && chosen.length > 0 && (
+          <p className="text-[12px] text-ink2 mt-2">
+            {moneyExact(Math.floor(totalCents / chosen.length))} each
+          </p>
+        )}
+
+        {mode === "custom" && (
+          <div className="flex flex-col gap-2 mt-3">
+            {chosen.map((member) => (
+              <div key={member.id} className="flex items-center gap-3 animate-rise">
+                <span className="flex-1 min-w-0 truncate text-[14px]">{member.name}</span>
+                <span className="w-[132px] shrink-0">
+                  <MoneyInput
+                    value={shares[member.id] ?? ""}
+                    onChange={(value) => setShares((prev) => ({ ...prev, [member.id]: value }))}
+                    ariaLabel={`${member.name}'s share`}
+                  />
+                </span>
+              </div>
+            ))}
+            {chosen.length > 0 && (
+              <p
+                className={`text-[12px] text-right ${
+                  leftCents === 0 && totalCents > 0 ? "text-ok" : "text-warn"
+                }`}
+              >
+                {!totalCents
+                  ? "Enter the total amount first"
+                  : leftCents === 0
+                    ? "Adds up ✓"
+                    : leftCents > 0
+                      ? `${moneyExact(leftCents)} left to assign`
+                      : `${moneyExact(-leftCents)} too much`}
+              </p>
+            )}
+          </div>
+        )}
       </fieldset>
 
       {error && <p className="text-[12px] text-warn">{error}</p>}
@@ -304,7 +388,7 @@ function AddExpenseForm({
       <div className="flex gap-2">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || !customReady || chosen.length === 0}
           className="bg-accent text-accent-ink rounded-xl h-11 px-5 font-semibold text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-60"
         >
           {pending ? "Adding…" : "Add expense"}
@@ -318,6 +402,47 @@ function AddExpenseForm({
         </button>
       </div>
     </form>
+  );
+}
+
+/** "12.5" → 1250 cents; anything unusable → 0. */
+function toCents(value: string) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
+}
+
+function MoneyInput({
+  name,
+  value,
+  onChange,
+  required,
+  ariaLabel,
+}: {
+  name?: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  ariaLabel: string;
+}) {
+  return (
+    <span className="relative block">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[16px] lg:text-[14px] text-ink2 pointer-events-none">
+        $
+      </span>
+      <input
+        name={name}
+        type="number"
+        inputMode="decimal"
+        step="0.01"
+        min="0"
+        required={required}
+        placeholder="0.00"
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`${field} pl-7 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+      />
+    </span>
   );
 }
 

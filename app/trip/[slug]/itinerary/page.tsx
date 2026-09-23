@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Itinerary } from "@/components/itinerary";
 import { getActivities, getDateVoting, getTripContext } from "@/db/queries";
 import { daysBetween } from "@/lib/format";
+import { PageTransition } from "@/components/page-transition";
 
 export const metadata = { title: "Itinerary · Lakad" };
 
@@ -22,12 +23,14 @@ export default async function ItineraryPage({ params }: PageProps<"/trip/[slug]/
     : (voting?.best?.days ?? []);
 
   return (
-    <Itinerary
-      tripId={trip.id}
-      days={days}
-      activities={activities}
-      members={context.members}
-      locked={locked}
-    />
+    <PageTransition>
+      <Itinerary
+        tripId={trip.id}
+        days={days}
+        activities={activities}
+        members={context.members}
+        locked={locked}
+      />
+    </PageTransition>
   );
 }
