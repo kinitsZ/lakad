@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandBar } from "@/components/brand-bar";
 import { InviteForm } from "@/components/invite-form";
 
-export const metadata = { title: "Open an invite · Tripsync" };
+export const metadata = { title: "Open an invite · Lakad" };
 
 export default function OpenInvitePage() {
   return (

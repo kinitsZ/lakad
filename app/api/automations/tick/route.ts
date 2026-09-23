@@ -12,7 +12,7 @@ import { syncTrip } from "@/lib/automations";
  * open the app. Point a scheduled n8n workflow at it:
  *
  *   POST /api/automations/tick
- *   x-tripsync-secret: $AUTOMATION_SECRET
+ *   x-lakad-secret: $AUTOMATION_SECRET
  */
 export async function POST(request: Request) {
   const secret = process.env.AUTOMATION_SECRET;
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       { status: 503 },
     );
   }
-  if (request.headers.get("x-tripsync-secret") !== secret) {
+  if (request.headers.get("x-lakad-secret") !== secret) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 

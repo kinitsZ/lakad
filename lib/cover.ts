@@ -37,7 +37,7 @@ export type GeneratedCover = {
   from: string;
   to: string;
   /** Overlapping discs; where they cross, the translucent white compounds
-   *  into the same lens the Tripsync mark is built from. */
+   *  into the same lens the Lakad mark is built from. */
   circles: { cx: number; cy: number; r: number; opacity: number }[];
 };
 

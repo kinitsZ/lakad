@@ -10,17 +10,3 @@ export function initialsFor(name: string) {
 
 /** Avatar colours cycle so a group stays visually distinguishable. */
 export const toneForIndex = (index: number) => TONES[index % TONES.length];
-
-/** "Cabo Reunion" → "cabo-reunion-h3k1". */
-export function slugify(name: string) {
-  const base =
-    name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 40) || "trip";
-  const suffix = Math.random().toString(36).slice(2, 6);
-  return `${base}-${suffix}`;
-}

@@ -6,6 +6,7 @@ import { setAutomations } from "@/app/actions/trips";
 import { markAllRead } from "@/app/actions/updates";
 import { DeviceCard } from "@/components/device-card";
 import { EmailCard } from "@/components/email-card";
+import { InviteCard } from "@/components/invite-card";
 import { Avatar, SectionLabel } from "@/components/ui";
 import type { MemberView, UpdateView } from "@/db/queries";
 
@@ -16,6 +17,8 @@ export function UpdatesPanel({
   members,
   automationsEnabled,
   email,
+  inviteCode,
+  isOrganiser,
 }: {
   slug: string;
   tripId: string;
@@ -23,6 +26,8 @@ export function UpdatesPanel({
   members: MemberView[];
   automationsEnabled: boolean;
   email: string | null;
+  inviteCode: string;
+  isOrganiser: boolean;
 }) {
   const [pending, start] = useTransition();
   const [automations, setLocalAutomations] = useState(automationsEnabled);
@@ -113,6 +118,7 @@ export function UpdatesPanel({
         <div className="flex flex-col gap-2.5 lg:gap-4">
           <EmailCard tripId={tripId} email={email} />
           <DeviceCard tripId={tripId} />
+          <InviteCard tripId={tripId} inviteCode={inviteCode} isOrganiser={isOrganiser} />
           <div className="bg-surface2 rounded-[16px] lg:rounded-[20px] px-[15px] lg:px-[18px] py-[13px] lg:py-[18px] flex items-center lg:items-start lg:flex-col justify-between gap-3 lg:gap-4">
             <div className="font-medium text-[12px] text-ink2 lg:text-[13px]">
               <span className="lg:hidden">Automations: reminders, invites, settle-up</span>

@@ -62,6 +62,11 @@ export async function getTripsForSession(token: string) {
     .orderBy(desc(trips.updatedAt));
 }
 
+export const getTripByInviteCode = cache(async (code: string) => {
+  const [trip] = await db.select().from(trips).where(eq(trips.inviteCode, code)).limit(1);
+  return trip ?? null;
+});
+
 export const getTripBySlug = cache(async (slug: string) => {
   const [trip] = await db.select().from(trips).where(eq(trips.slug, slug)).limit(1);
   return trip ?? null;

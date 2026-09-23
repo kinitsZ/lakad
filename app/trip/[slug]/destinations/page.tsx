@@ -3,7 +3,7 @@ import { DestinationVoting } from "@/components/destination-voting";
 import { getDestinations, getTripContext } from "@/db/queries";
 import { countdownLabel } from "@/lib/format";
 
-export const metadata = { title: "Destination voting · Tripsync" };
+export const metadata = { title: "Destination voting · Lakad" };
 
 export default async function DestinationsPage({
   params,

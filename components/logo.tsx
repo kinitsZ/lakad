@@ -1,5 +1,5 @@
 /**
- * The Tripsync mark: two circles of availability and the overlap where the
+ * The Lakad mark: two circles of availability and the overlap where the
  * group actually agrees — the same idea the date heatmap is built on.
  * The viewBox is cropped to the artwork, so `size` is the mark's real height.
  */
@@ -39,7 +39,7 @@ export function Logo({
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark size={markSize} className="text-accent" />
-      <span className={textClassName}>Tripsync</span>
+      <span className={textClassName}>Lakad</span>
     </span>
   );
 }

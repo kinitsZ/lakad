@@ -8,18 +8,20 @@ import { getTripContext } from "@/db/queries";
 export async function generateMetadata({ params }: PageProps<"/trip/[slug]">) {
   const { slug } = await params;
   const context = await getTripContext(slug);
-  return { title: context ? `${context.trip.name} · Tripsync` : "Tripsync" };
+  return {
+    title: context?.currentMember ? `${context.trip.name} · Lakad` : "Lakad",
+  };
 }
 
 export default async function TripDashboardPage({ params }: PageProps<"/trip/[slug]">) {
   const { slug } = await params;
   const context = await getTripContext(slug);
-  if (!context) notFound();
+  if (!context || !context.currentMember) notFound();
 
   const summary = await getDashboard(context);
-  const host = (await headers()).get("host") ?? "tripsync.app";
+  const host = (await headers()).get("host") ?? "localhost:3000";
   const protocol = host.startsWith("localhost") ? "http" : "https";
-  const inviteUrl = `${protocol}://${host}/join/${slug}`;
+  const inviteUrl = `${protocol}://${host}/join/${context.trip.inviteCode}`;
 
   return (
     <>

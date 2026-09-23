@@ -6,7 +6,7 @@ import { peekDeviceLink } from "@/lib/device-links";
 import { getCurrentMember } from "@/lib/session";
 
 export const metadata = {
-  title: "Sign in on this device · Tripsync",
+  title: "Sign in on this device · Lakad",
   // The token is in the URL; keep it out of Referer headers and search indexes.
   referrer: "no-referrer",
   robots: { index: false, follow: false },
@@ -59,7 +59,7 @@ export default async function DeviceLinkPage({ params }: PageProps<"/link/[token
               href="/"
               className="w-full border border-line rounded-[16px] p-4 text-center font-semibold text-[15px] hover:border-accent"
             >
-              Go to Tripsync
+              Go to Lakad
             </Link>
           </div>
         )}

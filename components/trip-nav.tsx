@@ -63,16 +63,18 @@ export function CopyLinkButton({
 export function TripTopNav({
   slug,
   member,
+  inviteCode,
 }: {
   slug: string;
   member: MemberView;
+  inviteCode: string;
 }) {
   const segment = useSegment(slug);
   const [copied, setCopied] = useState(false);
 
   async function copyInvite() {
     try {
-      await navigator.clipboard.writeText(`${location.origin}/join/${slug}`);
+      await navigator.clipboard.writeText(`${location.origin}/join/${inviteCode}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -86,7 +88,7 @@ export function TripTopNav({
       <div className="flex items-center gap-[26px]">
         <Link href={`/trip/${slug}`} className="flex items-center gap-2.5">
           <LogoMark size={19} className="text-accent" />
-          <div className="font-display font-bold text-[16px] text-ink">Tripsync</div>
+          <div className="font-display font-bold text-[16px] text-ink">Lakad</div>
         </Link>
         <nav className="flex gap-5 text-[13px] font-medium">
           {desktopLinks.map((link) => {

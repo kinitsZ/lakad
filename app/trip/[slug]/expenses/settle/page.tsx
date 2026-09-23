@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { SettleUp } from "@/components/settle-up";
 import { getExpenseData, getTripContext } from "@/db/queries";
 
-export const metadata = { title: "Settle up · Tripsync" };
+export const metadata = { title: "Settle up · Lakad" };
 
 export default async function SettleUpPage({
   params,

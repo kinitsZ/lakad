@@ -34,7 +34,7 @@ export function InviteForm() {
           setLink(event.target.value);
           setError(null);
         }}
-        placeholder="tripsync.app/join/…"
+        placeholder="https://…/join/…"
         className="bg-bg border-[1.5px] border-accent rounded-[16px] px-4 py-[15px] font-medium text-[16px] outline-none mb-2.5 placeholder:text-ink2/60"
       />
       <p className="text-[12px] leading-[1.45] text-ink2">

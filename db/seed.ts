@@ -215,6 +215,7 @@ async function main() {
   await db.delete(sessions).where(eq(sessions.token, "seed-demo"));
 
   console.log(`✓ seeded /trip/${SLUG} — ${PEOPLE.length} members, voting closes ${deadline.toISOString()}`);
+  console.log(`  join it as a fresh browser at /join/${trip.inviteCode}`);
   process.exit(0);
 }
 

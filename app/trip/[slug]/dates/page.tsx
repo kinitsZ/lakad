@@ -3,7 +3,7 @@ import { DateVoting } from "@/components/date-voting";
 import { getDateVoting, getTripContext } from "@/db/queries";
 import { deadlineLabel } from "@/lib/format";
 
-export const metadata = { title: "Date voting · Tripsync" };
+export const metadata = { title: "Date voting · Lakad" };
 
 export default async function DatesPage({ params }: PageProps<"/trip/[slug]/dates">) {
   const { slug } = await params;

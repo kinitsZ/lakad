@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { issueDeviceLink, redeemDeviceLink } from "@/lib/device-links";
 import { lanAddresses } from "@/lib/lan";
-import { attachSession, ensureSession, requireMember } from "@/lib/session";
+import { attachSession } from "@/lib/memberships";
+import { ensureSession, requireMember } from "@/lib/session";
 
 export async function createDeviceLink(tripId: string) {
   const member = await requireMember(tripId);

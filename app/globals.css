@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Design tokens — from the Tripsync design canvas (Claude Design handoff). */
+/* Design tokens — from the Lakad design canvas (Claude Design handoff). */
 :root {
   color-scheme: light;
   --bg: #faf7f4;

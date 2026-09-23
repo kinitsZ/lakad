@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { joinTrip } from "@/app/actions/trips";
 
-export function JoinForm({ slug }: { slug: string }) {
+export function JoinForm({ code }: { code: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -20,7 +20,7 @@ export function JoinForm({ slug }: { slug: string }) {
         })
       }
     >
-      <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="code" value={code} />
       <label htmlFor="join-name" className="font-semibold text-[12px] text-ink2 mb-2">
         What should we call you?
       </label>

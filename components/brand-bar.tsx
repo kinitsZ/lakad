@@ -9,7 +9,7 @@ export function BrandBar() {
       <div className="max-w-[1280px] mx-auto flex items-center justify-between px-6 py-3.5">
         <Link href="/" className="flex items-center gap-2.5">
           <LogoMark size={19} className="text-accent" />
-          <div className="font-display font-bold text-[16px] text-ink">Tripsync</div>
+          <div className="font-display font-bold text-[16px] text-ink">Lakad</div>
         </Link>
         <ThemeToggle />
       </div>

@@ -5,7 +5,7 @@ import { dateVotes, members, outbox, trips, updates } from "@/db/schema";
 import { addDays, daysBetween, rangeLabel } from "@/lib/format";
 
 /**
- * Tripsync never sends anything itself. Anything with an outside effect is
+ * Lakad never sends anything itself. Anything with an outside effect is
  * queued here for an automation runner (n8n) to pick up:
  *
  *   SELECT * FROM outbox WHERE status = 'pending' AND run_after <= now()

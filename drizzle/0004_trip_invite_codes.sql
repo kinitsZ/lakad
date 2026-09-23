@@ -1,0 +1,2 @@
+ALTER TABLE "trips" ADD COLUMN "invite_code" text DEFAULT substr(replace(gen_random_uuid()::text, '-', ''), 1, 12) NOT NULL;--> statement-breakpoint
+ALTER TABLE "trips" ADD CONSTRAINT "trips_invite_code_unique" UNIQUE("invite_code");

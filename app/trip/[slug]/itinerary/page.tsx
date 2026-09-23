@@ -3,7 +3,7 @@ import { Itinerary } from "@/components/itinerary";
 import { getActivities, getDateVoting, getTripContext } from "@/db/queries";
 import { daysBetween } from "@/lib/format";
 
-export const metadata = { title: "Itinerary · Tripsync" };
+export const metadata = { title: "Itinerary · Lakad" };
 
 export default async function ItineraryPage({ params }: PageProps<"/trip/[slug]/itinerary">) {
   const { slug } = await params;

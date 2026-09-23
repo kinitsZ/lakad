@@ -327,7 +327,7 @@ export function ExpensesEmptyState({ onAdd }: { onAdd: () => void }) {
       <div className="w-[42px] h-[42px] rounded-[14px] bg-surface2 mx-auto mb-3" />
       <h2 className="font-display font-semibold text-[16px] mb-[5px]">Nothing spent yet</h2>
       <p className="text-[12px] leading-[1.5] text-ink2 mb-3.5">
-        Add the first expense and Tripsync keeps every balance up to date — no spreadsheets.
+        Add the first expense and Lakad keeps every balance up to date — no spreadsheets.
       </p>
       <button
         type="button"

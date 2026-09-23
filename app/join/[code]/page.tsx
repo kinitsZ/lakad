@@ -1,23 +1,24 @@
-import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BrandBar } from "@/components/brand-bar";
 import { JoinForm } from "@/components/join-form";
 import { TripBanner } from "@/components/trip-banner";
 import { AvatarStack } from "@/components/ui";
-import { getMembers, getTripBySlug } from "@/db/queries";
+import { getMembers, getTripByInviteCode } from "@/db/queries";
 import { syncTrip } from "@/lib/automations";
 import { countdownLabel, rangeLabel } from "@/lib/format";
 import { getCurrentMember } from "@/lib/session";
 
 export async function generateMetadata({ params }: PageProps<"/join/[code]">) {
   const { code } = await params;
-  const trip = await getTripBySlug(code);
-  return { title: trip ? `Join ${trip.name} · Tripsync` : "Tripsync" };
+  const trip = await getTripByInviteCode(code);
+  return { title: trip ? `Join ${trip.name} · Lakad` : "Lakad" };
 }
 
 export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   const { code } = await params;
-  const found = await getTripBySlug(code);
-  if (!found) notFound();
+  const found = await getTripByInviteCode(code);
+  if (!found) return <ExpiredInvite />;
   const trip = await syncTrip(found);
 
   const already = await getCurrentMember(trip.id);
@@ -103,7 +104,30 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
           </div>
         </div>
 
-        <JoinForm slug={trip.slug} />
+        <JoinForm code={trip.inviteCode} />
+      </main>
+    </div>
+  );
+}
+
+function ExpiredInvite() {
+  return (
+    <div className="flex flex-col flex-1">
+      <BrandBar />
+      <main className="mx-auto w-full max-w-[430px] px-[22px] pt-10 pb-16 flex flex-col">
+        <h1 className="font-display font-semibold text-[30px] leading-[1.08] tracking-[-0.025em] mb-3">
+          This invite link doesn&rsquo;t work
+        </h1>
+        <p className="text-[14px] leading-[1.5] text-ink2 mb-7">
+          It may have been reset by the trip&rsquo;s organiser, or copied incompletely. Ask
+          whoever sent it for a fresh link.
+        </p>
+        <Link
+          href="/"
+          className="w-full border border-line rounded-[16px] p-4 text-center font-semibold text-[15px] hover:border-accent"
+        >
+          Go to the home page
+        </Link>
       </main>
     </div>
   );

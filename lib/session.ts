@@ -1,16 +1,26 @@
 import { randomBytes } from "node:crypto";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { db } from "@/db";
 import { memberSessions, members, sessions } from "@/db/schema";
 
-const COOKIE = "tripsync_session";
+const COOKIE = "lakad_session";
+/** The cookie's name before the rename. Still honoured so nobody gets signed out. */
+const LEGACY_COOKIE = "tripsync_session";
 const ONE_YEAR = 60 * 60 * 24 * 365;
+
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: ONE_YEAR,
+};
 
 /** Reads the browser's token. Safe to call while rendering. */
 export async function getSessionToken(): Promise<string | null> {
   const store = await cookies();
-  return store.get(COOKIE)?.value ?? null;
+  return store.get(COOKIE)?.value ?? store.get(LEGACY_COOKIE)?.value ?? null;
 }
 
 /**
@@ -19,7 +29,7 @@ export async function getSessionToken(): Promise<string | null> {
  */
 export async function ensureSession(): Promise<string> {
   const store = await cookies();
-  const existing = store.get(COOKIE)?.value;
+  const existing = store.get(COOKIE)?.value ?? store.get(LEGACY_COOKIE)?.value;
 
   if (existing) {
     const [row] = await db
@@ -32,19 +42,17 @@ export async function ensureSession(): Promise<string> {
         .update(sessions)
         .set({ lastSeenAt: new Date() })
         .where(eq(sessions.token, existing));
+      if (!store.get(COOKIE)) {
+        store.set(COOKIE, existing, cookieOptions);
+        store.delete(LEGACY_COOKIE);
+      }
       return existing;
     }
   }
 
   const token = randomBytes(32).toString("base64url");
   await db.insert(sessions).values({ token });
-  store.set(COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: ONE_YEAR,
-  });
+  store.set(COOKIE, token, cookieOptions);
   return token;
 }
 
@@ -60,23 +68,6 @@ export async function getCurrentMember(tripId: string) {
     .where(and(eq(memberSessions.sessionToken, token), eq(members.tripId, tripId)))
     .limit(1);
   return row?.member ?? null;
-}
-
-/**
- * Makes this browser act as `memberId`. If the browser was already somebody else
- * on the same trip, that link is dropped so it's never two people at once.
- */
-export async function attachSession(token: string, memberId: string, tripId: string) {
-  await db.transaction(async (tx) => {
-    const onThisTrip = tx
-      .select({ id: members.id })
-      .from(members)
-      .where(eq(members.tripId, tripId));
-    await tx
-      .delete(memberSessions)
-      .where(and(eq(memberSessions.sessionToken, token), inArray(memberSessions.memberId, onThisTrip)));
-    await tx.insert(memberSessions).values({ memberId, sessionToken: token });
-  });
 }
 
 /**

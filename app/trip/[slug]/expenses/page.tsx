@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Expenses } from "@/components/expenses";
 import { getExpenseData, getTripContext } from "@/db/queries";
 
-export const metadata = { title: "Expenses · Tripsync" };
+export const metadata = { title: "Expenses · Lakad" };
 
 export default async function ExpensesPage({ params }: PageProps<"/trip/[slug]/expenses">) {
   const { slug } = await params;

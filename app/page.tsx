@@ -17,7 +17,7 @@ const steps = [
     body: "They tap the link, add a name, mark free days and favourite spots.",
   },
   {
-    title: "Tripsync runs it",
+    title: "Lakad runs it",
     body: "Dates lock, invites land in calendars, expenses settle up.",
   },
 ];
@@ -32,7 +32,7 @@ export default async function LandingPage() {
         <div className="flex items-center gap-2.5">
           <LogoMark size={18} className="text-accent" />
           <div className="font-display font-bold text-[15px] lg:text-[16px]">
-            Tripsync
+            Lakad
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export default async function LandingPage() {
 
         <footer className="border-t border-line mt-10 lg:mt-14 pt-5 flex items-center justify-between gap-4 flex-wrap">
           <div className="text-[12px] text-ink2">
-            Tripsync — a Claude Design handoff, built for real.
+            Lakad — a Claude Design handoff, built for real.
           </div>
           <Link
             href="/credits"

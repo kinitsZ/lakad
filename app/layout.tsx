@@ -13,7 +13,7 @@ const instrumentSans = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Tripsync — plan a trip with friends",
+  title: "Lakad — plan a trip with friends",
   description:
     "Share one link. Everyone votes on dates and places, builds the itinerary, and splits the bill — reminders and calendar invites happen on their own.",
 };

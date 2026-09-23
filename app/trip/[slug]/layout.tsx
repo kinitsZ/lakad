@@ -1,4 +1,5 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { InviteOnly } from "@/components/invite-only";
 import { TripTabBar, TripTopNav } from "@/components/trip-nav";
 import { getTripContext } from "@/db/queries";
 
@@ -10,12 +11,16 @@ export default async function TripLayout({
   const context = await getTripContext(slug);
   if (!context) notFound();
 
-  // The whole product is link-first: if you haven't joined yet, join first.
-  if (!context.currentMember) redirect(`/join/${slug}`);
+  // Only the invite code (/join/<code>) lets people in; the trip URL alone doesn't.
+  if (!context.currentMember) return <InviteOnly />;
 
   return (
     <div className="flex flex-col flex-1">
-      <TripTopNav slug={slug} member={context.currentMember} />
+      <TripTopNav
+        slug={slug}
+        member={context.currentMember}
+        inviteCode={context.trip.inviteCode}
+      />
       <div className="flex-1 pb-[76px] lg:pb-0">{children}</div>
       <TripTabBar slug={slug} />
     </div>

@@ -12,12 +12,22 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /* ---------------------------------------------------------------- trips */
 
 export const trips = pgTable("trips", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
+  /**
+   * The secret in /join/<code>, separate from the slug so a trip URL seen in a
+   * screenshot doesn't let people join, and so the organiser can reset it. The app
+   * generates its own; the DB default only backfills existing trips.
+   */
+  inviteCode: text("invite_code")
+    .notNull()
+    .unique()
+    .default(sql`substr(replace(gen_random_uuid()::text, '-', ''), 1, 12)`),
   name: text("name").notNull(),
   /** Free text while the dates are still fuzzy, e.g. "Sometime in December". */
   timeframeLabel: text("timeframe_label").notNull().default(""),
@@ -268,7 +278,7 @@ export const updates = pgTable(
     body: text("body").notNull().default(""),
     icon: text("icon").notNull().default("•"),
     memberId: uuid("member_id").references(() => members.id, { onDelete: "set null" }),
-    /** True when Tripsync generated it rather than a person doing something. */
+    /** True when Lakad generated it rather than a person doing something. */
     automated: boolean("automated").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -292,7 +302,7 @@ export const updateReads = pgTable(
 /* ---------------------------------------------------------- automations */
 
 /**
- * Work queued for an external automation runner (n8n). Tripsync only ever
+ * Work queued for an external automation runner (n8n). Lakad only ever
  * writes rows here; the runner polls for due work and marks it done:
  *
  *   SELECT * FROM outbox

@@ -5,12 +5,12 @@ import * as schema from "./schema";
 type Db = PostgresJsDatabase<typeof schema>;
 
 const globalForDb = globalThis as unknown as {
-  __tripsyncClient?: ReturnType<typeof postgres>;
-  __tripsyncDb?: Db;
+  __lakadClient?: ReturnType<typeof postgres>;
+  __lakadDb?: Db;
 };
 
 function connect(): Db {
-  if (globalForDb.__tripsyncDb) return globalForDb.__tripsyncDb;
+  if (globalForDb.__lakadDb) return globalForDb.__lakadDb;
 
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -20,7 +20,7 @@ function connect(): Db {
   }
 
   const client =
-    globalForDb.__tripsyncClient ??
+    globalForDb.__lakadClient ??
     postgres(url, {
       // Supabase's transaction-mode pooler (port 6543) can't use prepared statements.
       // Everywhere else they save a round trip on every query with parameters.
@@ -30,8 +30,8 @@ function connect(): Db {
 
   const db = drizzle(client, { schema });
   // Reused across dev hot reloads so we don't leak connections.
-  globalForDb.__tripsyncClient = client;
-  globalForDb.__tripsyncDb = db;
+  globalForDb.__lakadClient = client;
+  globalForDb.__lakadDb = db;
   return db;
 }
 

@@ -1,4 +1,4 @@
-# Tripsync
+# Lakad
 
 A group trip planner: one person creates a trip and shares a link, friends join
 without an account, then everyone votes on dates and destinations, builds the
@@ -17,14 +17,17 @@ npm run dev
 ```
 
 Then open http://localhost:3000. The seed puts a fully populated trip at
-`/trip/cabo-reunion`; opening it as a fresh browser sends you through the join
-flow first, which is the real path an invited friend takes.
+`/trip/cabo-reunion` and prints its invite link (`/join/<code>`); open that as a
+fresh browser to go through the join flow, which is the real path an invited
+friend takes.
 
 ### Pointing at Supabase
 
 1. Create a project, then **Project Settings → Database → Connection string → URI**.
-2. Use the **pooled** connection (port `6543`) for `DATABASE_URL`. The Postgres
-   client already sets `prepare: false`, which that pooler requires.
+2. On serverless hosts (Vercel), use the **transaction pooler** (port `6543`) for
+   `DATABASE_URL`. Locally, the **session pooler** (port `5432`) is faster. The
+   client turns prepared statements off automatically on 6543, which that pooler
+   requires.
 3. `npm run db:migrate` against it once.
 
 The schema uses nothing Supabase-specific, so a plain Postgres 15+ works too.
@@ -35,22 +38,28 @@ The schema uses nothing Supabase-specific, so a plain Postgres 15+ works too.
 |---|---|
 | Schema | [`db/schema.ts`](db/schema.ts), migrations in [`drizzle/`](drizzle) |
 | Reads | [`db/queries.ts`](db/queries.ts), [`db/dashboard.ts`](db/dashboard.ts) |
-| Writes | Server Actions in [`app/actions/`](app/actions) |
+| Writes | Thin Server Actions in [`app/actions/`](app/actions) calling plain functions in [`lib/`](lib) (e.g. [`lib/trips.ts`](lib/trips.ts)) |
 | Identity | [`lib/session.ts`](lib/session.ts) |
 | Money | [`lib/money.ts`](lib/money.ts), [`lib/balances.ts`](lib/balances.ts) |
 | Automations | [`lib/automations.ts`](lib/automations.ts) |
 
+**Trip URLs vs invite links.** A trip lives at `/trip/<slug>`, where the slug is
+the name plus 10 random characters. Only members can see it; everyone else gets
+an "invite-only" page. Joining needs the separate invite code at
+`/join/<code>` (12 random characters), which the organiser can reset from
+Updates if it leaks. Both come from `node:crypto` ([`lib/codes.ts`](lib/codes.ts)).
+
 **Identity without accounts.** Joining sets an httpOnly cookie holding an opaque
 session token; `member_sessions` ties that token to a member of one trip. One
 browser can be a member of many trips, and one member can be signed in on many
-browsers.
+browsers. Every Server Action calls `requireMember()` before it writes, because
+actions are reachable by direct POST, not just through the UI.
 
 **Other devices.** From Updates → "Use on another device", a member gets a QR
 code / link (`/link/<token>`) that signs a second browser in as them. It works
 once and expires after 10 minutes; only a SHA-256 of the token is stored. Opening
 the link only shows "Continue as …" — the sign-in happens on the button's POST,
-so chat apps that pre-fetch links for previews can't spend it. Every Server Action calls `requireMember()` before it
-writes, because actions are reachable by direct POST, not just through the UI.
+so chat apps that pre-fetch links for previews can't spend it.
 
 **Money is integer cents** end to end. Balances are derived from expenses,
 splits and recorded payments; the settle-up suggestions are computed fresh on
@@ -98,7 +107,7 @@ correctness but not if nobody opens the app. So there's also a scheduled hook:
 
 ```
 POST /api/automations/tick
-x-tripsync-secret: $AUTOMATION_SECRET
+x-lakad-secret: $AUTOMATION_SECRET
 
 → { "checked": 1, "locked": [{ "slug": "cabo-reunion", "start": "2026-12-12", "end": "2026-12-15" }] }
 ```

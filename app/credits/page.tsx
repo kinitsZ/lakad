@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BrandBar } from "@/components/brand-bar";
 import { allPhotos } from "@/lib/images";
 
-export const metadata = { title: "Photo credits · Tripsync" };
+export const metadata = { title: "Photo credits · Lakad" };
 
 export default function CreditsPage() {
   return (
@@ -20,7 +20,7 @@ export default function CreditsPage() {
           Photo credits
         </h1>
         <p className="text-[14px] leading-[1.6] text-ink2 mb-8">
-          Tripsync&rsquo;s photography comes from Wikimedia Commons under
+          Lakad&rsquo;s photography comes from Wikimedia Commons under
           Creative Commons licences. Images have been resized and cropped to
           fit; each one is credited to its photographer below.
         </p>
