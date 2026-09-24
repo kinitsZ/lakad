@@ -68,54 +68,51 @@ payments people actually made are persisted.
 
 ## Automations and n8n
 
-The app **never sends anything itself**. Anything with an outside effect is
-queued in the `outbox` table for an external runner to pick up:
+The app **never sends anything itself**, and the runner (n8n) **never touches the
+database**. Anything with an outside effect is queued in the `outbox` table; the
+runner makes two HTTP calls, both with the header `x-lakad-secret: $AUTOMATION_SECRET`:
 
-```sql
--- what n8n polls
-SELECT * FROM outbox
- WHERE status = 'pending' AND run_after <= now()
- ORDER BY run_after
- LIMIT 20;
+```
+POST /api/automations/tick          every ~5 minutes
+→ {
+    "checked": 1, "locked": [{ "slug": "…", "start": "2026-12-12", "end": "2026-12-15" }],
+    "emails": [{
+      "jobId": "…", "kind": "payment_reminder",
+      "to": "priya@example.com", "toName": "Priya",
+      "subject": "You owe $74.00 for Cabo Reunion",
+      "text": "…", "html": "…",
+      "attachment": { "filename": "lakad-trip.ics", "mimeType": "text/calendar", "base64": "…" }  // calendar invites only
+    }],
+    "skipped": [{ "jobId": "…", "kind": "vote_reminder", "reason": "everyone with an email has voted" }]
+  }
 
--- ...and writes back when it's handled
-UPDATE outbox SET status = 'done', processed_at = now() WHERE id = $1;
-UPDATE outbox SET status = 'failed', attempts = attempts + 1, last_error = $2 WHERE id = $1;
+POST /api/automations/report        after sending
+{ "results": [{ "jobId": "…", "ok": true }, { "jobId": "…", "ok": false, "error": "…" }] }
+→ { "done": 3, "retrying": 1, "failed": 0 }
 ```
 
-| `kind` | Queued when | Payload |
+`tick` first advances trips whose voting deadline has passed (locking the dates
+with a guarded `UPDATE ... WHERE phase = 'voting'`, so exactly one caller wins),
+then **claims** due jobs and returns them as finished emails. Recipients are
+worked out at send time — only members who added an email, and e.g. only those
+who still haven't voted — so the logic lives in
+[`lib/automations-send.ts`](lib/automations-send.ts), not in the runner.
+
+A claimed job is leased for 10 minutes: if it isn't reported (the runner crashed),
+it comes back on its own. A job is `done` when all its emails succeeded; otherwise
+it retries with a growing delay and is marked `failed` after 5 attempts. Jobs with
+nobody to email are marked `done` with a `skipped: …` note.
+
+| `kind` | Queued when | Emails |
 |---|---|---|
-| `vote_reminder` | trip created; due 24h before the deadline | `{ slug, tripName }` |
-| `calendar_invite` | dates lock | `{ start, end, tripName, slug }` |
-| `payment_reminder` | an expense is added | `{ expenseId }` |
-| `settle_up_summary` | reserved for the trip being marked done | `{ }` |
+| `vote_reminder` | trip created; due 24h before the deadline | members with an email who haven't voted |
+| `calendar_invite` | dates lock | every member with an email, with a `.ics` attached |
+| `payment_reminder` | an expense is added (due 3 days later), or "Remind" is tapped | people who still owe money (or just the one reminded) |
+| `settle_up_summary` | reserved for the trip being marked done | not sent yet |
 
-`dedupe_key` is uniquely indexed, so re-queuing the same reminder is a no-op and
-the app can be careless about calling `enqueue()` more than once. Turning off
-Automations on the Updates screen flips `trips.automations_enabled`, after which
-nothing new is queued.
-
-### Driving the state machine
-
-State changes stay in the app, not the runner. When the voting deadline passes,
-the winning range is locked via a guarded `UPDATE ... WHERE phase = 'voting'`, so
-exactly one caller wins the transition and queues the follow-up work — n8n only
-has to send things.
-
-That transition runs lazily whenever someone loads the trip, which is enough for
-correctness but not if nobody opens the app. So there's also a scheduled hook:
-
-```
-POST /api/automations/tick
-x-lakad-secret: $AUTOMATION_SECRET
-
-→ { "checked": 1, "locked": [{ "slug": "cabo-reunion", "start": "2026-12-12", "end": "2026-12-15" }] }
-```
-
-It advances every trip whose deadline has passed and is safe to call as often as
-you like — a second call returns `{ "checked": 0 }`. Set `AUTOMATION_SECRET` in
-the environment and point an n8n Schedule trigger at it (every 5 minutes is
-plenty), then have the same workflow drain the `outbox`.
+`dedupe_key` is uniquely indexed, so re-queuing the same reminder is a no-op.
+Turning off Automations on the Updates screen flips `trips.automations_enabled`:
+nothing new is queued, and anything already queued is skipped.
 
 ## Scripts
 
