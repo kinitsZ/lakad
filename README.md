@@ -110,8 +110,9 @@ nobody to email are marked `done` with a `skipped: …` note.
 | `settle_up_summary` | reserved for the trip being marked done | not sent yet |
 
 `dedupe_key` is uniquely indexed, so re-queuing the same reminder is a no-op.
-Turning off Automations on the Updates screen flips `trips.automations_enabled`:
-nothing new is queued, and anything already queued is skipped.
+Reminder emails are per person: each member can switch theirs off on the Updates
+screen (`members.reminders_enabled`) while keeping their address saved, and is then
+left out of every email for that trip.
 
 ## Scripts
 

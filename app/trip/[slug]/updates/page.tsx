@@ -24,8 +24,8 @@ export default async function UpdatesPage({ params }: PageProps<"/trip/[slug]/up
         tripId={context.trip.id}
         updates={updates}
         members={context.members}
-        automationsEnabled={context.trip.automationsEnabled}
         email={me?.email ?? null}
+        remindersEnabled={me?.remindersEnabled ?? true}
         inviteCode={context.trip.inviteCode}
         isOrganiser={context.currentMember.isOrganiser}
       />

@@ -2,10 +2,28 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { setMyEmail } from "@/app/actions/updates";
+import { setMyEmail, setMyReminders } from "@/app/actions/updates";
 
-export function EmailCard({ tripId, email }: { tripId: string; email: string | null }) {
+export function EmailCard({
+  tripId,
+  email,
+  remindersEnabled,
+}: {
+  tripId: string;
+  email: string | null;
+  remindersEnabled: boolean;
+}) {
   const [pending, start] = useTransition();
+  const [on, setOn] = useState(remindersEnabled);
+
+  function toggle() {
+    const next = !on;
+    setOn(next);
+    start(async () => {
+      const result = await setMyReminders(tripId, next);
+      if (!result.ok) setOn(!next);
+    });
+  }
   const [editing, setEditing] = useState(!email);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,14 +39,44 @@ export function EmailCard({ tripId, email }: { tripId: string; email: string | n
   return (
     <section
       id="email"
-      className="scroll-mt-6 bg-surface border border-line rounded-[16px] lg:rounded-[20px] px-[15px] lg:px-[18px] py-[13px] lg:py-[18px]">
-      <h2 className="font-display font-semibold text-[15px] mb-1">Email me reminders</h2>
+      className="scroll-mt-6 bg-surface border border-line rounded-[16px] lg:rounded-[20px] px-[15px] lg:px-[18px] py-[13px] lg:py-[18px]"
+    >
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <h2 className="font-display font-semibold text-[15px]">Email reminders</h2>
+        {email && !editing && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            aria-label="Send me reminder emails for this trip"
+            onClick={toggle}
+            className={`w-[38px] h-[22px] shrink-0 rounded-full flex items-center p-0.5 cursor-pointer ${
+              on ? "bg-accent" : "bg-line"
+            }`}
+          >
+            <span
+              className={`w-[18px] h-[18px] rounded-full transition-transform duration-200 ease-out ${
+                on ? "bg-accent-ink translate-x-4" : "bg-surface translate-x-0"
+              }`}
+            />
+          </button>
+        )}
+      </div>
 
       {email && !editing ? (
         <>
           <p className="text-[12px] lg:text-[13px] leading-[1.5] text-ink2 mb-3">
-            Reminders and the calendar invite go to{" "}
-            <span className="font-semibold text-ink break-all">{email}</span>.
+            {on ? (
+              <>
+                Voting nudges, the calendar invite and payment reminders go to{" "}
+                <span className="font-semibold text-ink break-all">{email}</span>.
+              </>
+            ) : (
+              <>
+                Paused — you won&rsquo;t get reminder emails for this trip.{" "}
+                <span className="font-semibold text-ink break-all">{email}</span> stays saved.
+              </>
+            )}
           </p>
           <div className="flex gap-2">
             <button

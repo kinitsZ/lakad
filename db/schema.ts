@@ -42,7 +42,7 @@ export const trips = pgTable("trips", {
   lockedEnd: date("locked_end"),
   /** Null means "no photo chosen" — the trip gets a generated banner instead. */
   coverKey: text("cover_key"),
-  /** When off, nothing new is queued for the automation runner. */
+  /** No longer used (reminders are per member now). Dropped once the new code is deployed. */
   automationsEnabled: boolean("automations_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -70,6 +70,8 @@ export const members = pgTable(
     isOrganiser: boolean("is_organiser").notNull().default(false),
     /** Optional — added later if they want reminders and the calendar invite. */
     email: text("email"),
+    /** Their own on/off for reminder emails on this trip; the address stays saved when off. */
+    remindersEnabled: boolean("reminders_enabled").notNull().default(true),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("members_trip_idx").on(table.tripId)],

@@ -49,9 +49,3 @@ export async function resetInviteLink(tripId: string) {
   refreshTrip();
   return { inviteCode };
 }
-
-export async function setAutomations(tripId: string, enabled: boolean) {
-  await requireMember(tripId);
-  await tripsLib.setAutomations(tripId, enabled);
-  refreshTrip();
-}

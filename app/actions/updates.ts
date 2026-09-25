@@ -2,36 +2,33 @@
 
 import { eq } from "drizzle-orm";
 import { refreshTrip } from "@/app/actions/revalidate";
-import { z } from "zod";
 import { db } from "@/db";
-import { members, updateReads, updates } from "@/db/schema";
+import { updateReads, updates } from "@/db/schema";
+import * as remindersLib from "@/lib/reminders";
 import { requireMember } from "@/lib/session";
-
-const emailSchema = z.union([
-  z.literal(""),
-  z.email("That doesn't look like an email address.").max(254),
-]);
 
 /** An empty value removes the email, which stops reminders and invites for this member. */
 export async function setMyEmail(tripId: string, formData: FormData) {
   const member = await requireMember(tripId);
 
-  const parsed = emailSchema.safeParse(
+  const parsed = remindersLib.emailSchema.safeParse(
     String(formData.get("email") ?? "")
       .trim()
       .toLowerCase(),
   );
   if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "Check the email and try again.",
-    };
+    return { error: parsed.error.issues[0]?.message ?? "Check the email and try again." };
   }
 
-  await db
-    .update(members)
-    .set({ email: parsed.data || null })
-    .where(eq(members.id, member.id));
+  await remindersLib.setMemberEmail(member.id, parsed.data || null);
+  refreshTrip();
+  return { ok: true };
+}
 
+/** Turns this person's own reminder emails on or off for the trip. */
+export async function setMyReminders(tripId: string, enabled: boolean) {
+  const member = await requireMember(tripId);
+  await remindersLib.setMemberReminders(member.id, Boolean(enabled));
   refreshTrip();
   return { ok: true };
 }

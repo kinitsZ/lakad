@@ -36,13 +36,6 @@ export async function enqueue({
   runAfter?: Date;
   dedupeKey?: string;
 }) {
-  const [trip] = await db
-    .select({ enabled: trips.automationsEnabled })
-    .from(trips)
-    .where(eq(trips.id, tripId))
-    .limit(1);
-  if (!trip?.enabled) return;
-
   await db
     .insert(outbox)
     .values({ tripId, kind, payload, runAfter, dedupeKey })

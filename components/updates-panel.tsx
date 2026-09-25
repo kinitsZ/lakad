@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { setAutomations } from "@/app/actions/trips";
 import { markAllRead } from "@/app/actions/updates";
 import { DeviceCard } from "@/components/device-card";
 import { EmailCard } from "@/components/email-card";
@@ -15,8 +14,8 @@ export function UpdatesPanel({
   tripId,
   updates,
   members,
-  automationsEnabled,
   email,
+  remindersEnabled,
   inviteCode,
   isOrganiser,
 }: {
@@ -24,13 +23,12 @@ export function UpdatesPanel({
   tripId: string;
   updates: UpdateView[];
   members: MemberView[];
-  automationsEnabled: boolean;
   email: string | null;
+  remindersEnabled: boolean;
   inviteCode: string;
   isOrganiser: boolean;
 }) {
   const [pending, start] = useTransition();
-  const [automations, setLocalAutomations] = useState(automationsEnabled);
   const [showAll, setShowAll] = useState(false);
   // On phones the settings cards sit under the list, so keep it short until asked.
   const MOBILE_LIMIT = 5;
@@ -101,9 +99,7 @@ export function UpdatesPanel({
                     ) : (
                       <div
                         className={`w-8 h-8 shrink-0 rounded-[11px] grid place-items-center font-bold text-[13px] ${
-                          update.automated
-                            ? "bg-accent text-accent-ink"
-                            : "bg-surface2 text-ink2"
+                          update.automated ? "bg-accent text-accent-ink" : "bg-surface2 text-ink2"
                         }`}
                         aria-hidden
                       >
@@ -137,42 +133,9 @@ export function UpdatesPanel({
         </div>
 
         <div className="flex flex-col gap-2.5 lg:gap-4">
-          <EmailCard tripId={tripId} email={email} />
+          <EmailCard tripId={tripId} email={email} remindersEnabled={remindersEnabled} />
           <DeviceCard tripId={tripId} />
           <InviteCard tripId={tripId} inviteCode={inviteCode} isOrganiser={isOrganiser} />
-          <div className="bg-surface2 rounded-[16px] lg:rounded-[20px] px-[15px] lg:px-[18px] py-[13px] lg:py-[18px] flex items-center lg:items-start lg:flex-col justify-between gap-3 lg:gap-4">
-            <div className="font-medium text-[12px] text-ink2 lg:text-[13px]">
-              <span className="lg:hidden">Automations: reminders, invites, settle-up</span>
-              <span className="hidden lg:block font-display font-semibold text-[15px] text-ink mb-1">
-                Automations
-              </span>
-              <span className="hidden lg:block text-ink2 leading-[1.5]">
-                Reminders, calendar invites and settle-up summaries are queued for the automation
-                runner to send.
-              </span>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={automations}
-              aria-label="Automations"
-              disabled={pending}
-              onClick={() => {
-                const next = !automations;
-                setLocalAutomations(next);
-                start(() => void setAutomations(tripId, next));
-              }}
-              className={`w-[38px] h-[22px] shrink-0 rounded-full flex items-center p-0.5 cursor-pointer ${
-                automations ? "bg-accent" : "bg-line"
-              }`}
-            >
-              <span
-                className={`w-[18px] h-[18px] rounded-full transition-transform duration-200 ease-out ${
-                  automations ? "bg-accent-ink translate-x-4" : "bg-surface translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
         </div>
       </div>
     </div>

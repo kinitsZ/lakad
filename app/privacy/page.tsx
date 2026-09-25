@@ -11,7 +11,10 @@ export default function PrivacyPage() {
     <>
       <BrandBar />
       <main className="mx-auto w-full max-w-[430px] lg:max-w-[720px] px-[22px] lg:px-6 py-8 lg:py-12">
-        <Link href="/" className="font-medium text-[13px] text-ink2 hover:text-ink mb-6 inline-block">
+        <Link
+          href="/"
+          className="font-medium text-[13px] text-ink2 hover:text-ink mb-6 inline-block"
+        >
           ← Back
         </Link>
         <h1 className="font-display font-semibold text-[30px] lg:text-[38px] tracking-[-0.025em] mb-2">
@@ -51,8 +54,8 @@ export default function PrivacyPage() {
           <Section title="How we use it">
             <p>
               Only to run your trips: showing the group&rsquo;s plans, working out balances and who
-              should pay whom, and — if you&rsquo;ve added an email and the trip has automations
-              turned on — sending voting reminders, the calendar invite when dates lock, and payment
+              should pay whom, and — if you&rsquo;ve added an email and haven&rsquo;t paused
+              reminders — sending voting reminders, the calendar invite when dates lock, and payment
               reminders. We don&rsquo;t sell your data, use it for advertising, or send marketing
               email.
             </p>
@@ -79,9 +82,7 @@ export default function PrivacyPage() {
                 {CONTACT}.
               </li>
             </ul>
-            <p className="mt-3">
-              They process data only to provide these services to us.
-            </p>
+            <p className="mt-3">They process data only to provide these services to us.</p>
           </Section>
 
           <Section title="Keeping and deleting your data" id="delete">
@@ -97,8 +98,7 @@ export default function PrivacyPage() {
 
           <Section title="Changes">
             <p>
-              If we change how we handle data, we&rsquo;ll update this page and the date at the
-              top.
+              If we change how we handle data, we&rsquo;ll update this page and the date at the top.
             </p>
           </Section>
         </div>

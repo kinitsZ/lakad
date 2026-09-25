@@ -142,14 +142,19 @@ type Rendered = { emails: OutgoingEmail[] } | { skip: string };
 async function render(job: OutboxRow, origin: string): Promise<Rendered> {
   const [trip] = await db.select().from(trips).where(eq(trips.id, job.tripId)).limit(1);
   if (!trip) return { skip: "trip no longer exists" };
-  if (!trip.automationsEnabled) return { skip: "automations are turned off for this trip" };
 
   const roster = await db
-    .select({ id: members.id, name: members.name, email: members.email })
+    .select({
+      id: members.id,
+      name: members.name,
+      email: members.email,
+      remindersEnabled: members.remindersEnabled,
+    })
     .from(members)
     .where(eq(members.tripId, trip.id));
   const withEmail = roster.filter(
-    (m): m is typeof m & { email: string } => Boolean(m.email) && !isPlaceholder(m.email!),
+    (m): m is typeof m & { email: string } =>
+      Boolean(m.email) && m.remindersEnabled && !isPlaceholder(m.email!),
   );
   const tripUrl = `${origin}/trip/${trip.slug}`;
   const first = (name: string) => name.split(" ")[0];
@@ -191,7 +196,7 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
         .where(eq(dateVoteSubmissions.tripId, trip.id));
       const votedIds = new Set(voted.map((v) => v.memberId));
       const recipients = withEmail.filter((m) => !votedIds.has(m.id));
-      if (!recipients.length) return { skip: "everyone with an email has voted" };
+      if (!recipients.length) return { skip: "everyone getting reminders has voted" };
 
       return {
         emails: await Promise.all(
@@ -212,7 +217,7 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
 
     case OUTBOX.calendarInvite: {
       if (!trip.lockedStart || !trip.lockedEnd) return { skip: "dates aren't locked" };
-      if (!withEmail.length) return { skip: "nobody on the trip has added an email" };
+      if (!withEmail.length) return { skip: "nobody on the trip gets reminder emails" };
       const range = rangeLabel(trip.lockedStart, trip.lockedEnd);
       const google = new URL("https://calendar.google.com/calendar/render");
       google.searchParams.set("action", "TEMPLATE");
@@ -254,7 +259,7 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
       const debtors = withEmail.filter(
         (m) => (!target || m.id === target) && transfers.some((t) => t.fromMemberId === m.id),
       );
-      if (!debtors.length) return { skip: "nobody with an email still owes money" };
+      if (!debtors.length) return { skip: "nobody getting reminders still owes money" };
 
       const nameOf = new Map(roster.map((m) => [m.id, first(m.name)]));
       return {

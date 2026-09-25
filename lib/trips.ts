@@ -128,10 +128,3 @@ export async function resetInviteCode(tripId: string) {
   }
   throw new Error("Couldn't generate a new invite link. Try again.");
 }
-
-export async function setAutomations(tripId: string, enabled: boolean) {
-  await db
-    .update(trips)
-    .set({ automationsEnabled: enabled, updatedAt: new Date() })
-    .where(eq(trips.id, tripId));
-}
