@@ -26,6 +26,9 @@ function connect(): Db {
       // Everywhere else they save a round trip on every query with parameters.
       prepare: new URL(url).port !== "6543",
       max: Number(process.env.DATABASE_POOL_MAX ?? 5),
+      // Release idle connections so paused serverless instances (or a dev server)
+      // don't sit on the pooler's limited client slots.
+      idle_timeout: 20,
     });
 
   const db = drizzle(client, { schema });
