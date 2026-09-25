@@ -312,8 +312,20 @@ button:not(:disabled):active {
   animation: scene-sway 4.5s ease-in-out infinite alternate;
 }
 .scene-boat {
-  transform-origin: 319px 410px;
+  transform-origin: 319px 412px;
   animation: scene-bob 3.2s ease-in-out infinite alternate;
+}
+.scene-reflection {
+  transform-origin: 320px 419px;
+  animation: scene-breathe 3.2s ease-in-out infinite alternate;
+}
+.scene-pennant {
+  transform-origin: 319px 365px;
+  animation: scene-flutter 0.6s ease-in-out infinite alternate;
+}
+.scene-wave-hand {
+  transform-origin: 333.3px 399px;
+  animation: scene-hand 0.7s ease-in-out infinite alternate;
 }
 .scene-glow {
   transform-origin: 300px 150px;
@@ -327,6 +339,54 @@ button:not(:disabled):active {
   animation: scene-twinkle 3.4s ease-in-out infinite alternate;
 }
 
+/* Pointer parallax: TripScene sets --px/--py (-1…1); each layer has its own --depth. */
+.scene-layer {
+  transform: translate(
+    calc(var(--px, 0) * var(--depth, 0) * 1px),
+    calc(var(--py, 0) * var(--depth, 0) * 0.5px)
+  );
+  transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.scene-bird {
+  animation: scene-cross 34s linear infinite;
+}
+.scene-flap {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: scene-flap 0.5s ease-in-out infinite alternate;
+}
+.scene-glint {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: scene-glint 2.6s ease-in-out infinite alternate;
+}
+
+@keyframes scene-cross {
+  from {
+    transform: translateX(-40px);
+  }
+  to {
+    transform: translateX(460px);
+  }
+}
+@keyframes scene-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.35);
+  }
+}
+@keyframes scene-glint {
+  from {
+    opacity: 0.1;
+    transform: scaleX(0.5);
+  }
+  to {
+    opacity: 0.55;
+    transform: scaleX(1);
+  }
+}
 @keyframes scene-wave {
   to {
     transform: translateX(var(--wave));
@@ -335,6 +395,22 @@ button:not(:disabled):active {
 @keyframes scene-drift {
   to {
     transform: translateX(34px);
+  }
+}
+@keyframes scene-flutter {
+  from {
+    transform: scaleX(1) skewY(0deg);
+  }
+  to {
+    transform: scaleX(0.75) skewY(6deg);
+  }
+}
+@keyframes scene-hand {
+  from {
+    transform: rotate(-18deg);
+  }
+  to {
+    transform: rotate(22deg);
   }
 }
 @keyframes scene-sway {
