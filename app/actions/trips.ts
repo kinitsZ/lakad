@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { refreshTrip } from "@/app/actions/revalidate";
 import { getTripByInviteCode } from "@/db/queries";
-import { ensureSession, getCurrentMember, requireMember } from "@/lib/session";
+import { ensureSession, getCurrentMember, getUser, requireMember } from "@/lib/session";
 import * as tripsLib from "@/lib/trips";
 
 export async function createTrip(formData: FormData) {
@@ -21,7 +21,8 @@ export async function createTrip(formData: FormData) {
   }
 
   const token = await ensureSession();
-  const trip = await tripsLib.createTrip(parsed.data, token);
+  const user = await getUser();
+  const trip = await tripsLib.createTrip(parsed.data, token, user?.id ?? null);
   redirect(`/trip/${trip.slug}`);
 }
 
@@ -37,7 +38,8 @@ export async function joinTrip(formData: FormData) {
   if (await getCurrentMember(trip.id)) redirect(`/trip/${trip.slug}`);
 
   const token = await ensureSession();
-  await tripsLib.joinTrip(trip, name.data, token);
+  const user = await getUser();
+  await tripsLib.joinTrip(trip, name.data, token, user?.id ?? null);
   redirect(`/trip/${trip.slug}`);
 }
 

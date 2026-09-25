@@ -3,10 +3,10 @@
 import { useState, useTransition } from "react";
 import { joinTrip } from "@/app/actions/trips";
 
-export function JoinForm({ code }: { code: string }) {
+export function JoinForm({ code, defaultName = "" }: { code: string; defaultName?: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(defaultName);
   const ready = name.trim().length > 0;
 
   return (

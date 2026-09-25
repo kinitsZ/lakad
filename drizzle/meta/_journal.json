@@ -57,6 +57,13 @@
       "when": 1790328865396,
       "tag": "0007_drop_trip_automations",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790333856601,
+      "tag": "0008_accounts",
+      "breakpoints": true
     }
   ]
 }

@@ -55,6 +55,14 @@ browser can be a member of many trips, and one member can be signed in on many
 browsers. Every Server Action calls `requireMember()` before it writes, because
 actions are reachable by direct POST, not just through the UI.
 
+**Optional accounts.** "Continue with Google" (Better Auth, [`lib/auth.ts`](lib/auth.ts),
+tables prefixed `auth_`) ties a person's spots across trips and devices through
+`members.user_id`. Joining still needs only a name. On sign-in, `/auth/claim` attaches
+the guest spots this browser holds to the account ([`lib/accounts.ts`](lib/accounts.ts));
+a trip where the account already has a spot is skipped rather than merged. On
+sign-out the browser stops acting as the account's spots. "Who am I on this trip?"
+checks the account first, then the guest cookie ([`lib/session.ts`](lib/session.ts)).
+
 **Other devices.** From Updates → "Use on another device", a member gets a QR
 code / link (`/link/<token>`) that signs a second browser in as them. It works
 once and expires after 10 minutes; only a SHA-256 of the token is stored. Opening

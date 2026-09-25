@@ -44,9 +44,14 @@ export default function PrivacyPage() {
                 mark as made.
               </li>
               <li>
-                <b className="text-ink">A sign-in cookie</b> holding a random code that keeps this
-                browser signed in to your trips. We don&rsquo;t use advertising or tracking cookies.
-                Your light/dark theme choice is saved in your own browser only.
+                <b className="text-ink">If you sign in with Google:</b> your name, email address and
+                profile photo, which Google shares with us so we can keep your trips on your
+                account. We never see your Google password or get access to your Gmail.
+              </li>
+              <li>
+                <b className="text-ink">Sign-in cookies</b> holding random codes that keep this
+                browser signed in to your trips and your account. We don&rsquo;t use advertising or
+                tracking cookies. Your light/dark theme choice is saved in your own browser only.
               </li>
             </ul>
           </Section>
@@ -76,6 +81,10 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <b className="text-ink">Supabase</b> hosts the database where trips are stored.
+              </li>
+              <li>
+                <b className="text-ink">Google</b> handles &ldquo;Continue with Google&rdquo;
+                sign-in.
               </li>
               <li>
                 <b className="text-ink">Google (Gmail)</b> delivers reminder emails, sent from{" "}

@@ -7,7 +7,8 @@ import { AvatarStack } from "@/components/ui";
 import { getMembers, getTripByInviteCode } from "@/db/queries";
 import { syncTrip } from "@/lib/automations";
 import { countdownLabel, rangeLabel } from "@/lib/format";
-import { getCurrentMember } from "@/lib/session";
+import { getCurrentMember, getUser } from "@/lib/session";
+import { GoogleSignIn } from "@/components/google-sign-in";
 
 export async function generateMetadata({ params }: PageProps<"/join/[code]">) {
   const { code } = await params;
@@ -21,7 +22,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
   if (!found) return <ExpiredInvite />;
   const trip = await syncTrip(found);
 
-  const already = await getCurrentMember(trip.id);
+  const [already, user] = await Promise.all([getCurrentMember(trip.id), getUser()]);
   if (already) redirect(`/trip/${trip.slug}`);
 
   const members = await getMembers(trip.id);
@@ -104,7 +105,23 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
           </div>
         </div>
 
-        <JoinForm code={trip.inviteCode} />
+        <div className="flex flex-col flex-1 lg:flex-none">
+          <JoinForm code={trip.inviteCode} defaultName={user?.name.split(" ")[0] ?? ""} />
+          {user ? (
+            <p className="text-[12px] text-ink2 mt-3 text-center">
+              Joining as {user.email} — this trip will be saved to your account.
+            </p>
+          ) : (
+            <div className="mt-4">
+              <div className="flex items-center gap-3 mb-3 text-[12px] text-ink2">
+                <span className="h-px flex-1 bg-line" />
+                or save it to an account
+                <span className="h-px flex-1 bg-line" />
+              </div>
+              <GoogleSignIn next={`/join/${trip.inviteCode}`} />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
@@ -119,8 +136,8 @@ function ExpiredInvite() {
           This invite link doesn&rsquo;t work
         </h1>
         <p className="text-[14px] leading-[1.5] text-ink2 mb-7">
-          It may have been reset by the trip&rsquo;s organiser, or copied incompletely. Ask
-          whoever sent it for a fresh link.
+          It may have been reset by the trip&rsquo;s organiser, or copied incompletely. Ask whoever
+          sent it for a fresh link.
         </p>
         <Link
           href="/"

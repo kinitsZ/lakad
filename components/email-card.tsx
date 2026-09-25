@@ -8,10 +8,12 @@ export function EmailCard({
   tripId,
   email,
   remindersEnabled,
+  accountEmail,
 }: {
   tripId: string;
   email: string | null;
   remindersEnabled: boolean;
+  accountEmail: string | null;
 }) {
   const [pending, start] = useTransition();
   const [on, setOn] = useState(remindersEnabled);
@@ -99,48 +101,62 @@ export function EmailCard({
           </div>
         </>
       ) : (
-        <form action={save}>
-          <label
-            htmlFor="member-email"
-            className="block text-[12px] lg:text-[13px] leading-[1.5] text-ink2 mb-3"
-          >
-            Optional. Add one to get voting nudges, the calendar invite when dates lock, and payment
-            reminders.
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="member-email"
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              required
-              defaultValue={email ?? ""}
-              maxLength={254}
-              placeholder="you@example.com"
-              className="min-w-0 flex-1 bg-bg border border-line focus:border-accent rounded-[12px] px-3 py-2.5 text-[14px] outline-none placeholder:text-ink2/60"
-            />
-            <button
-              type="submit"
-              disabled={pending}
-              className="shrink-0 bg-accent text-accent-ink rounded-[12px] px-4 font-semibold text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-45"
-            >
-              {pending ? "Saving…" : "Save"}
-            </button>
-          </div>
-          {email && (
-            <button
-              type="button"
-              onClick={() => {
-                setError(null);
-                setEditing(false);
-              }}
-              className="mt-2 font-semibold text-[11px] text-ink2 cursor-pointer hover:text-ink"
-            >
-              Cancel
-            </button>
+        <>
+          {accountEmail && !email && (
+            <form action={save} className="mb-3">
+              <input type="hidden" name="email" value={accountEmail} />
+              <button
+                type="submit"
+                disabled={pending}
+                className="w-full bg-accent-soft text-accent rounded-[12px] px-3 py-2.5 font-semibold text-[13px] text-left cursor-pointer hover:opacity-90 disabled:opacity-60 truncate"
+              >
+                Use {accountEmail}
+              </button>
+            </form>
           )}
-        </form>
+          <form action={save}>
+            <label
+              htmlFor="member-email"
+              className="block text-[12px] lg:text-[13px] leading-[1.5] text-ink2 mb-3"
+            >
+              Optional. Add one to get voting nudges, the calendar invite when dates lock, and
+              payment reminders.
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="member-email"
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                required
+                defaultValue={email ?? ""}
+                maxLength={254}
+                placeholder="you@example.com"
+                className="min-w-0 flex-1 bg-bg border border-line focus:border-accent rounded-[12px] px-3 py-2.5 text-[16px] lg:text-[14px] outline-none placeholder:text-ink2/60"
+              />
+              <button
+                type="submit"
+                disabled={pending}
+                className="shrink-0 bg-accent text-accent-ink rounded-[12px] px-4 font-semibold text-[13px] cursor-pointer hover:opacity-90 disabled:opacity-45"
+              >
+                {pending ? "Saving…" : "Save"}
+              </button>
+            </div>
+            {email && (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setEditing(false);
+                }}
+                className="mt-2 font-semibold text-[11px] text-ink2 cursor-pointer hover:text-ink"
+              >
+                Cancel
+              </button>
+            )}
+          </form>
+        </>
       )}
 
       {error && <p className="text-[12px] text-warn mt-2">{error}</p>}

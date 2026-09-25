@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import {
@@ -43,9 +43,24 @@ export type TripContext = {
   currentMember: MemberView | null;
 };
 
-/** Every trip this browser has joined, most recently active first. */
-export async function getTripsForSession(token: string) {
-  return db
+/**
+ * Every trip you're on — through your account (any device) or this browser's
+ * guest spots — most recently active first, once per trip.
+ */
+export async function getMyTrips({ token, userId }: { token: string | null; userId: string | null }) {
+  if (!token && !userId) return [];
+  const viaBrowser = token
+    ? db
+        .select({ id: memberSessions.memberId })
+        .from(memberSessions)
+        .where(eq(memberSessions.sessionToken, token))
+    : null;
+  const conditions = [
+    ...(userId ? [eq(members.userId, userId)] : []),
+    ...(viaBrowser ? [inArray(members.id, viaBrowser)] : []),
+  ];
+
+  const rows = await db
     .select({
       slug: trips.slug,
       name: trips.name,
@@ -55,11 +70,13 @@ export async function getTripsForSession(token: string) {
       lockedEnd: trips.lockedEnd,
       memberName: members.name,
     })
-    .from(memberSessions)
-    .innerJoin(members, eq(members.id, memberSessions.memberId))
+    .from(members)
     .innerJoin(trips, eq(trips.id, members.tripId))
-    .where(eq(memberSessions.sessionToken, token))
+    .where(or(...conditions))
     .orderBy(desc(trips.updatedAt));
+
+  const seen = new Set<string>();
+  return rows.filter((row) => !seen.has(row.slug) && seen.add(row.slug));
 }
 
 export const getTripByInviteCode = cache(async (code: string) => {

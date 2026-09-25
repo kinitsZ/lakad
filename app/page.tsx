@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo, LogoMark } from "@/components/logo";
+import { AccountMenu } from "@/components/account-menu";
+import { GoogleSignIn } from "@/components/google-sign-in";
 import { TripScene } from "@/components/trip-scene";
-import { getTripsForSession } from "@/db/queries";
+import { getMyTrips } from "@/db/queries";
 import { rangeLabel } from "@/lib/format";
-import { getSessionToken } from "@/lib/session";
+import { getSessionToken, getUser } from "@/lib/session";
 
 const steps = [
   {
@@ -22,8 +24,8 @@ const steps = [
 ];
 
 export default async function LandingPage() {
-  const token = await getSessionToken();
-  const myTrips = token ? await getTripsForSession(token) : [];
+  const [token, user] = await Promise.all([getSessionToken(), getUser()]);
+  const myTrips = await getMyTrips({ token, userId: user?.id ?? null });
 
   return (
     <div className="w-full">
@@ -46,6 +48,13 @@ export default async function LandingPage() {
           >
             Plan a trip
           </Link>
+          {user ? (
+            <AccountMenu
+              user={{ name: user.name, email: user.email, image: user.image ?? null }}
+            />
+          ) : (
+            <GoogleSignIn compact label="Sign in" next="/" />
+          )}
         </div>
       </header>
 

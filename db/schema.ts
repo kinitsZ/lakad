@@ -46,6 +46,75 @@ export const trips = pgTable("trips", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/* ------------------------------------------------------------- accounts */
+/*
+ * Better Auth's tables (lib/auth.ts), prefixed so they're clearly separate from the
+ * guest `sessions` below and from Supabase's own `auth` schema. Field names match
+ * what Better Auth expects; ids are strings it generates.
+ */
+
+export const authUser = pgTable("auth_user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const authSession = pgTable(
+  "auth_session",
+  {
+    id: text("id").primaryKey(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    token: text("token").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
+      .notNull()
+      .references(() => authUser.id, { onDelete: "cascade" }),
+  },
+  (table) => [index("auth_session_user_idx").on(table.userId)],
+);
+
+export const authAccount = pgTable(
+  "auth_account",
+  {
+    id: text("id").primaryKey(),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => authUser.id, { onDelete: "cascade" }),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true }),
+    scope: text("scope"),
+    password: text("password"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("auth_account_user_idx").on(table.userId)],
+);
+
+export const authVerification = pgTable(
+  "auth_verification",
+  {
+    id: text("id").primaryKey(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("auth_verification_identifier_idx").on(table.identifier)],
+);
+
 /* ------------------------------------------------------------- identity */
 
 /** One row per browser. Joining a trip needs no account, just this token. */
@@ -70,9 +139,14 @@ export const members = pgTable(
     email: text("email"),
     /** Their own on/off for reminder emails on this trip; the address stays saved when off. */
     remindersEnabled: boolean("reminders_enabled").notNull().default(true),
+    /** The account this spot belongs to, once someone signs in. Null for guests. */
+    userId: text("user_id").references(() => authUser.id, { onDelete: "set null" }),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("members_trip_idx").on(table.tripId)],
+  (table) => [
+    index("members_trip_idx").on(table.tripId),
+    index("members_user_idx").on(table.userId),
+  ],
 );
 
 /** Which browsers act as which member. A member can be signed in on several devices. */

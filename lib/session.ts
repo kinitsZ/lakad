@@ -1,7 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { cache } from "react";
 import { db } from "@/db";
+import { auth } from "@/lib/auth";
 import { memberSessions, members, sessions } from "@/db/schema";
 
 const COOKIE = "lakad_session";
@@ -56,8 +58,27 @@ export async function ensureSession(): Promise<string> {
   return token;
 }
 
-/** The member this browser is, on this trip — or null if they haven't joined. */
+/** The signed-in account, if any (once per request). Guests get null. */
+export const getUser = cache(async () => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  return session?.user ?? null;
+});
+
+/**
+ * Who you are on this trip: your account's spot if you're signed in and have one,
+ * otherwise the guest spot this browser joined with — or null if neither.
+ */
 export async function getCurrentMember(tripId: string) {
+  const user = await getUser();
+  if (user) {
+    const [mine] = await db
+      .select()
+      .from(members)
+      .where(and(eq(members.tripId, tripId), eq(members.userId, user.id)))
+      .limit(1);
+    if (mine) return mine;
+  }
+
   const token = await getSessionToken();
   if (!token) return null;
 

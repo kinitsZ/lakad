@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { directionTo } from "@/components/page-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AccountMenu, type AccountView } from "@/components/account-menu";
+import { GoogleSignIn } from "@/components/google-sign-in";
 import { Avatar } from "@/components/ui";
 import type { MemberView } from "@/db/queries";
 
@@ -65,10 +67,12 @@ export function TripTopNav({
   slug,
   member,
   inviteCode,
+  user,
 }: {
   slug: string;
   member: MemberView;
   inviteCode: string;
+  user: AccountView | null;
 }) {
   const segment = useSegment(slug);
   const [copied, setCopied] = useState(false);
@@ -122,7 +126,14 @@ export function TripTopNav({
         >
           {copied ? "Link copied" : "Copy invite link"}
         </button>
-        <Avatar member={member} size={30} />
+        {user ? (
+          <AccountMenu user={user} />
+        ) : (
+          <>
+            <GoogleSignIn compact label="Sign in" next={`/trip/${slug}${segment}`} />
+            <Avatar member={member} size={30} />
+          </>
+        )}
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { markAllRead } from "@/app/actions/updates";
+import { AccountCard } from "@/components/account-card";
+import type { AccountView } from "@/components/account-menu";
 import { DeviceCard } from "@/components/device-card";
 import { EmailCard } from "@/components/email-card";
 import { InviteCard } from "@/components/invite-card";
@@ -16,6 +18,7 @@ export function UpdatesPanel({
   members,
   email,
   remindersEnabled,
+  user,
   inviteCode,
   isOrganiser,
 }: {
@@ -25,6 +28,7 @@ export function UpdatesPanel({
   members: MemberView[];
   email: string | null;
   remindersEnabled: boolean;
+  user: AccountView | null;
   inviteCode: string;
   isOrganiser: boolean;
 }) {
@@ -133,7 +137,13 @@ export function UpdatesPanel({
         </div>
 
         <div className="flex flex-col gap-2.5 lg:gap-4">
-          <EmailCard tripId={tripId} email={email} remindersEnabled={remindersEnabled} />
+          <AccountCard user={user} next={`/trip/${slug}/updates`} />
+          <EmailCard
+            tripId={tripId}
+            email={email}
+            remindersEnabled={remindersEnabled}
+            accountEmail={user?.email ?? null}
+          />
           <DeviceCard tripId={tripId} />
           <InviteCard tripId={tripId} inviteCode={inviteCode} isOrganiser={isOrganiser} />
         </div>

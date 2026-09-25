@@ -54,8 +54,12 @@ async function insertTrip(input: CreateTripInput): Promise<Trip> {
   throw new Error("Couldn't pick a unique trip address. Try again.");
 }
 
-/** Creates the trip with `sessionToken`'s browser as its organiser. */
-export async function createTrip(input: CreateTripInput, sessionToken: string) {
+/** Creates the trip with `sessionToken`'s browser (and `userId`'s account, if signed in) as organiser. */
+export async function createTrip(
+  input: CreateTripInput,
+  sessionToken: string,
+  userId: string | null = null,
+) {
   const trip = await insertTrip(input);
 
   const [organiser] = await db
@@ -66,6 +70,7 @@ export async function createTrip(input: CreateTripInput, sessionToken: string) {
       initials: initialsFor(input.organiserName),
       tone: toneForIndex(0),
       isOrganiser: true,
+      userId,
     })
     .returning({ id: members.id });
   await attachSession(sessionToken, organiser.id, trip.id);
@@ -82,8 +87,13 @@ export async function createTrip(input: CreateTripInput, sessionToken: string) {
   return trip;
 }
 
-/** Adds a new member called `name` and signs `sessionToken`'s browser in as them. */
-export async function joinTrip(trip: Trip, name: string, sessionToken: string) {
+/** Adds a member called `name`, signs this browser in as them, and ties them to `userId` if signed in. */
+export async function joinTrip(
+  trip: Trip,
+  name: string,
+  sessionToken: string,
+  userId: string | null = null,
+) {
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(members)
@@ -96,6 +106,7 @@ export async function joinTrip(trip: Trip, name: string, sessionToken: string) {
       name,
       initials: initialsFor(name),
       tone: toneForIndex(count),
+      userId,
     })
     .returning({ id: members.id });
   await attachSession(sessionToken, joined.id, trip.id);
