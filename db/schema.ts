@@ -42,8 +42,6 @@ export const trips = pgTable("trips", {
   lockedEnd: date("locked_end"),
   /** Null means "no photo chosen" — the trip gets a generated banner instead. */
   coverKey: text("cover_key"),
-  /** No longer used (reminders are per member now). Dropped once the new code is deployed. */
-  automationsEnabled: boolean("automations_enabled").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
