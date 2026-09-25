@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { FACEBOOK_SIGN_IN } from "@/lib/features";
 
 type Provider = "google" | "facebook";
 
@@ -56,7 +57,7 @@ export function SignInOptions({ next, className = "" }: { next: string; classNam
   return (
     <div className={`flex flex-col gap-2.5 ${className}`}>
       <SocialSignIn provider="google" next={next} />
-      <SocialSignIn provider="facebook" next={next} />
+      {FACEBOOK_SIGN_IN && <SocialSignIn provider="facebook" next={next} />}
     </div>
   );
 }

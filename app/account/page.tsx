@@ -5,6 +5,7 @@ import { ConnectProvider, DeleteAccountForm } from "@/components/account-control
 import { AccountAvatar } from "@/components/account-menu";
 import { BrandBar } from "@/components/brand-bar";
 import { FORMER_MEMBER, getSignInMethods } from "@/lib/accounts";
+import { FACEBOOK_SIGN_IN } from "@/lib/features";
 import { getAccountView, getUser } from "@/lib/session";
 
 export const metadata = { title: "Your account · Lakad" };
@@ -43,7 +44,11 @@ export default async function AccountPage() {
           <h2 className="font-display font-semibold text-[17px] mb-1">Sign-in methods</h2>
           <p className="text-[13px] text-ink2 mb-4">Use any of these to open your account.</p>
           <ul className="flex flex-col divide-y divide-line">
-            {PROVIDERS.map((provider) => (
+            {PROVIDERS.filter(
+              // Hidden providers still show if already connected, so nobody loses track of one.
+              (provider) =>
+                provider.id !== "facebook" || FACEBOOK_SIGN_IN || methods.includes(provider.id),
+            ).map((provider) => (
               <li key={provider.id} className="flex items-center justify-between gap-3 py-2.5">
                 <span className="font-medium text-[14px]">{provider.label}</span>
                 {methods.includes(provider.id) ? (
@@ -68,9 +73,9 @@ export default async function AccountPage() {
           <h2 className="font-display font-semibold text-[17px] mb-1">Delete account</h2>
           <p className="text-[13px] leading-[1.55] text-ink2 mb-4">
             This permanently deletes your account, email and photo, and signs you out everywhere.
-            Your spots on trips stay so your friends&rsquo; plans and balances still add up, but they
-            show as &ldquo;{FORMER_MEMBER}&rdquo; and no one can sign in as them. This can&rsquo;t be
-            undone.
+            Your spots on trips stay so your friends&rsquo; plans and balances still add up, but
+            they show as &ldquo;{FORMER_MEMBER}&rdquo; and no one can sign in as them. This
+            can&rsquo;t be undone.
           </p>
           <DeleteAccountForm />
         </section>

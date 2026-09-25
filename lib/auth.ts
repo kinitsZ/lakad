@@ -4,6 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
 import { authAccount, authSession, authUser, authVerification } from "@/db/schema";
+import { FACEBOOK_SIGN_IN } from "@/lib/features";
 
 /** Placeholder addresses for sign-ins that came without an email (see Facebook below). */
 export const NO_EMAIL_DOMAIN = "users.lakad.invalid";
@@ -33,19 +34,24 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       prompt: "select_account",
     },
-    facebook: {
-      clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? "",
-      // Phone-only Facebook accounts have no email. Give them a unique placeholder on
-      // the reserved .invalid domain: never delivered, never shown, never linked.
-      mapProfileToUser: (profile) =>
-        profile.email
-          ? {}
-          : {
-              email: `fb-${"id" in profile ? profile.id : profile.sub}@${NO_EMAIL_DOMAIN}`,
-              emailVerified: false,
-            },
-    },
+    // Only offered once the Meta app is published (lib/features.ts).
+    ...(FACEBOOK_SIGN_IN
+      ? {
+          facebook: {
+            clientId: process.env.FACEBOOK_CLIENT_ID ?? "",
+            clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? "",
+            // Phone-only Facebook accounts have no email. Give them a unique placeholder on
+            // the reserved .invalid domain: never delivered, never shown, never linked.
+            mapProfileToUser: (profile) =>
+              profile.email
+                ? {}
+                : {
+                    email: `fb-${"id" in profile ? profile.id : profile.sub}@${NO_EMAIL_DOMAIN}`,
+                    emailVerified: false,
+                  },
+          },
+        }
+      : {}),
   },
   account: {
     // Google verifies addresses, so a Google sign-in may join an existing account
