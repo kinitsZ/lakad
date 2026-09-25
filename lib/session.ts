@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { db } from "@/db";
-import { auth } from "@/lib/auth";
+import { auth, hasRealEmail } from "@/lib/auth";
 import { memberSessions, members, sessions } from "@/db/schema";
 
 const COOKIE = "lakad_session";
@@ -58,11 +58,24 @@ export async function ensureSession(): Promise<string> {
   return token;
 }
 
-/** The signed-in account, if any (once per request). Guests get null. */
-export const getUser = cache(async () => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  return session?.user ?? null;
-});
+/** The signed-in account and its session, if any (once per request). */
+export const getAuthSession = cache(async () => auth.api.getSession({ headers: await headers() }));
+
+/** The signed-in account, if any. Guests get null. */
+export const getUser = cache(async () => (await getAuthSession())?.user ?? null);
+
+/** What the interface shows about an account. Placeholder addresses are hidden. */
+export type AccountView = { name: string; email: string | null; image: string | null };
+
+export async function getAccountView(): Promise<AccountView | null> {
+  const user = await getUser();
+  if (!user) return null;
+  return {
+    name: user.name,
+    email: hasRealEmail(user.email) ? user.email : null,
+    image: user.image ?? null,
+  };
+}
 
 /**
  * Who you are on this trip: your account's spot if you're signed in and have one,

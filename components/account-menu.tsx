@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "@/app/actions/account";
 
-export type AccountView = { name: string; email: string; image: string | null };
+export type AccountView = { name: string; email: string | null; image: string | null };
 
 /** Your photo in the header; opens your name, email, trips and "Sign out". */
 export function AccountMenu({ user }: { user: AccountView }) {
@@ -43,7 +43,7 @@ export function AccountMenu({ user }: { user: AccountView }) {
             <AccountAvatar user={user} size={36} />
             <div className="min-w-0">
               <div className="font-semibold text-[14px] truncate">{user.name}</div>
-              <div className="text-[12px] text-ink2 truncate">{user.email}</div>
+              {user.email && <div className="text-[12px] text-ink2 truncate">{user.email}</div>}
             </div>
           </div>
           <Link
@@ -52,6 +52,13 @@ export function AccountMenu({ user }: { user: AccountView }) {
             className="block mt-2 px-2 py-2 rounded-[10px] text-[13px] font-medium hover:bg-surface2"
           >
             Your trips
+          </Link>
+          <Link
+            href="/account"
+            onClick={() => setOpen(false)}
+            className="block px-2 py-2 rounded-[10px] text-[13px] font-medium hover:bg-surface2"
+          >
+            Account
           </Link>
           <form action={signOut}>
             <button

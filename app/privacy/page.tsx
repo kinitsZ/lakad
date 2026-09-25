@@ -44,9 +44,10 @@ export default function PrivacyPage() {
                 mark as made.
               </li>
               <li>
-                <b className="text-ink">If you sign in with Google:</b> your name, email address and
-                profile photo, which Google shares with us so we can keep your trips on your
-                account. We never see your Google password or get access to your Gmail.
+                <b className="text-ink">If you sign in with Google or Facebook:</b> your name, email
+                address (Facebook may not share one) and profile photo, which they share with us so
+                we can keep your trips on your account. We never see your password, and we
+                can&rsquo;t see or post anything on your Google or Facebook account.
               </li>
               <li>
                 <b className="text-ink">Sign-in cookies</b> holding random codes that keep this
@@ -83,8 +84,8 @@ export default function PrivacyPage() {
                 <b className="text-ink">Supabase</b> hosts the database where trips are stored.
               </li>
               <li>
-                <b className="text-ink">Google</b> handles &ldquo;Continue with Google&rdquo;
-                sign-in.
+                <b className="text-ink">Google and Meta (Facebook)</b> handle &ldquo;Continue with
+                Google&rdquo; and &ldquo;Continue with Facebook&rdquo; sign-in.
               </li>
               <li>
                 <b className="text-ink">Google (Gmail)</b> delivers reminder emails, sent from{" "}
@@ -97,11 +98,17 @@ export default function PrivacyPage() {
           <Section title="Keeping and deleting your data" id="delete">
             <p>
               Trip data is kept while the trip exists, so the group can look back on its plans and
-              balances. You can remove your email yourself at any time from a trip&rsquo;s Updates
-              page. To have your data deleted — your name, email and anything you added — email{" "}
-              <Mail /> with the trip&rsquo;s name and the name you used, and we&rsquo;ll remove it
-              within 30 days. Expenses other people logged may keep an anonymous entry so the
-              group&rsquo;s balances still add up.
+              balances. You can stop reminder emails with the link at the bottom of any of them, or
+              remove your email at any time from a trip&rsquo;s Updates page.{" "}
+              <b className="text-ink">If you have an account</b>, delete it yourself anytime from{" "}
+              <Link href="/account#delete" className="text-accent hover:underline">
+                Your account → Delete account
+              </Link>
+              : your account, email and photo are removed immediately, and your spots on trips show
+              as &ldquo;Former member&rdquo;. If you joined without an account, or want anything
+              else removed, email <Mail /> with the trip&rsquo;s name and the name you used, and
+              we&rsquo;ll remove it within 30 days. Expenses other people logged may keep an
+              anonymous entry so the group&rsquo;s balances still add up.
             </p>
           </Section>
 

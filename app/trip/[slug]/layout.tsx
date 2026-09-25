@@ -2,14 +2,14 @@ import { notFound } from "next/navigation";
 import { InviteOnly } from "@/components/invite-only";
 import { TripTabBar, TripTopNav } from "@/components/trip-nav";
 import { getTripContext } from "@/db/queries";
-import { getUser } from "@/lib/session";
+import { getAccountView } from "@/lib/session";
 
 export default async function TripLayout({
   children,
   params,
 }: LayoutProps<"/trip/[slug]">) {
   const { slug } = await params;
-  const [context, user] = await Promise.all([getTripContext(slug), getUser()]);
+  const [context, user] = await Promise.all([getTripContext(slug), getAccountView()]);
   if (!context) notFound();
 
   // Only the invite code (/join/<code>) lets people in; the trip URL alone doesn't.
@@ -21,7 +21,7 @@ export default async function TripLayout({
         slug={slug}
         member={context.currentMember}
         inviteCode={context.trip.inviteCode}
-        user={user ? { name: user.name, email: user.email, image: user.image ?? null } : null}
+        user={user}
       />
       <div className="flex-1 pb-[76px] lg:pb-0">{children}</div>
       <TripTabBar slug={slug} />

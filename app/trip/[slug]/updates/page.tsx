@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { UpdatesPanel } from "@/components/updates-panel";
 import { getTripContext, getUpdates } from "@/db/queries";
-import { getCurrentMember, getUser } from "@/lib/session";
+import { getAccountView, getCurrentMember } from "@/lib/session";
 import { PageTransition } from "@/components/page-transition";
 
 export const metadata = { title: "Updates · Lakad" };
@@ -15,7 +15,7 @@ export default async function UpdatesPage({ params }: PageProps<"/trip/[slug]/up
   const [updates, me, user] = await Promise.all([
     getUpdates(context.trip.id, context.currentMember.id),
     getCurrentMember(context.trip.id),
-    getUser(),
+    getAccountView(),
   ]);
 
   return (
@@ -27,7 +27,7 @@ export default async function UpdatesPage({ params }: PageProps<"/trip/[slug]/up
         members={context.members}
         email={me?.email ?? null}
         remindersEnabled={me?.remindersEnabled ?? true}
-        user={user ? { name: user.name, email: user.email, image: user.image ?? null } : null}
+        user={user}
         inviteCode={context.trip.inviteCode}
         isOrganiser={context.currentMember.isOrganiser}
       />

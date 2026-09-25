@@ -79,6 +79,21 @@ export async function getMyTrips({ token, userId }: { token: string | null; user
   return rows.filter((row) => !seen.has(row.slug) && seen.add(row.slug));
 }
 
+/** What the "Stop these emails" page needs about one member's reminders. */
+export async function getReminderSettings(memberId: string) {
+  const [row] = await db
+    .select({
+      name: members.name,
+      remindersEnabled: members.remindersEnabled,
+      tripName: trips.name,
+    })
+    .from(members)
+    .innerJoin(trips, eq(trips.id, members.tripId))
+    .where(eq(members.id, memberId))
+    .limit(1);
+  return row ?? null;
+}
+
 export const getTripByInviteCode = cache(async (code: string) => {
   const [trip] = await db.select().from(trips).where(eq(trips.inviteCode, code)).limit(1);
   return trip ?? null;

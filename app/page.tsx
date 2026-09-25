@@ -2,11 +2,10 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo, LogoMark } from "@/components/logo";
 import { AccountMenu } from "@/components/account-menu";
-import { GoogleSignIn } from "@/components/google-sign-in";
 import { TripScene } from "@/components/trip-scene";
 import { getMyTrips } from "@/db/queries";
 import { rangeLabel } from "@/lib/format";
-import { getSessionToken, getUser } from "@/lib/session";
+import { getAccountView, getSessionToken, getUser } from "@/lib/session";
 
 const steps = [
   {
@@ -24,8 +23,12 @@ const steps = [
 ];
 
 export default async function LandingPage() {
-  const [token, user] = await Promise.all([getSessionToken(), getUser()]);
-  const myTrips = await getMyTrips({ token, userId: user?.id ?? null });
+  const [token, account, user] = await Promise.all([
+    getSessionToken(),
+    getAccountView(),
+    getUser(),
+  ]);
+  const myTrips = await getMyTrips({ token, userId: account ? (user?.id ?? null) : null });
 
   return (
     <div className="w-full">
@@ -48,12 +51,15 @@ export default async function LandingPage() {
           >
             Plan a trip
           </Link>
-          {user ? (
-            <AccountMenu
-              user={{ name: user.name, email: user.email, image: user.image ?? null }}
-            />
+          {account ? (
+            <AccountMenu user={account} />
           ) : (
-            <GoogleSignIn compact label="Sign in" next="/" />
+            <Link
+              href={`/sign-in?next=${encodeURIComponent("/")}`}
+              className="border border-line rounded-full px-[13px] py-[7px] font-semibold text-[12px] text-ink2 hover:border-accent hover:text-ink"
+            >
+              Sign in
+            </Link>
           )}
         </div>
       </header>

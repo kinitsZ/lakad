@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { OUTBOX } from "@/lib/automations";
 import { issueEmailLink } from "@/lib/device-links";
+import { unsubscribeToken } from "@/lib/unsubscribe";
 import { computeBalances, settleUp } from "@/lib/balances";
 import { addDays, deadlineLabel, rangeLabel } from "@/lib/format";
 import { moneyExact } from "@/lib/money";
@@ -160,11 +161,12 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
   const first = (name: string) => name.split(" ")[0];
   // Each recipient's button signs *their* browser in, then lands on the right page —
   // otherwise tapping it from a mail app or another device hits "invite-only".
+  const stopUrl = (memberId: string) => `${origin}/unsubscribe/${unsubscribeToken(memberId)}`;
   const signIn = async (memberId: string, path: string) =>
     `${origin}/link/${await issueEmailLink(memberId)}?next=${encodeURIComponent(path)}`;
 
   const email = (
-    to: { email: string; name: string },
+    to: { id: string; email: string; name: string },
     subject: string,
     lines: string[],
     cta: { label: string; url: string },
@@ -183,8 +185,14 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
       ...[cta, ...extraLinks].map((link) => `${link.label}: ${link.url}`),
       "",
       "— Lakad",
+      "",
+      `You're getting this because you added your email to ${trip.name} on Lakad.`,
+      `Stop these emails: ${stopUrl(to.id)}`,
     ].join("\n"),
-    html: htmlEmail(`Hi ${first(to.name)},`, lines, cta, extraLinks),
+    html: htmlEmail(`Hi ${first(to.name)},`, lines, cta, extraLinks, {
+      reason: `You're getting this because you added your email to ${trip.name} on Lakad.`,
+      stopUrl: stopUrl(to.id),
+    }),
   });
 
   switch (job.kind) {
@@ -345,6 +353,7 @@ function htmlEmail(
   lines: string[],
   cta: { label: string; url: string },
   extraLinks: { label: string; url: string }[],
+  footer: { reason: string; stopUrl: string },
 ) {
   const paragraphs = [greeting, ...lines]
     .map((line) => `<p style="margin:0 0 12px">${escapeHtml(line)}</p>`)
@@ -355,5 +364,5 @@ function htmlEmail(
         `<a href="${escapeHtml(link.url)}" style="color:#c8643b;font-weight:600">${escapeHtml(link.label)}</a>`,
     )
     .join(" &nbsp;·&nbsp; ");
-  return `<div style="font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;color:#231f1c;max-width:480px">${paragraphs}<p style="margin:20px 0 ${extras ? "10px" : "20px"}"><a href="${escapeHtml(cta.url)}" style="background:#c8643b;color:#fffdfb;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:600;display:inline-block">${escapeHtml(cta.label)}</a></p>${extras ? `<p style="margin:0 0 20px;font-size:14px">${extras}</p>` : ""}<p style="margin:0;color:#6f665e;font-size:13px">— Lakad</p></div>`;
+  return `<div style="font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;color:#231f1c;max-width:480px">${paragraphs}<p style="margin:20px 0 ${extras ? "10px" : "20px"}"><a href="${escapeHtml(cta.url)}" style="background:#c8643b;color:#fffdfb;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:600;display:inline-block">${escapeHtml(cta.label)}</a></p>${extras ? `<p style="margin:0 0 20px;font-size:14px">${extras}</p>` : ""}<p style="margin:0;color:#6f665e;font-size:13px">— Lakad</p><p style="margin:24px 0 0;padding-top:12px;border-top:1px solid #e9e1d9;color:#8a8079;font-size:12px">${escapeHtml(footer.reason)} <a href="${escapeHtml(footer.stopUrl)}" style="color:#8a8079">Stop these emails</a></p></div>`;
 }

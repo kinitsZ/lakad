@@ -7,7 +7,6 @@ import { useState } from "react";
 import { directionTo } from "@/components/page-transition";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AccountMenu, type AccountView } from "@/components/account-menu";
-import { GoogleSignIn } from "@/components/google-sign-in";
 import { Avatar } from "@/components/ui";
 import type { MemberView } from "@/db/queries";
 
@@ -93,47 +92,50 @@ export function TripTopNav({
   return (
     <div className="hidden lg:block border-b border-line bg-surface">
       <div className="max-w-[1280px] mx-auto flex items-center justify-between px-6 py-3.5">
-      <div className="flex items-center gap-[26px]">
-        <Link href={`/trip/${slug}`} className="flex items-center gap-2.5">
-          <LogoMark size={19} className="text-accent" />
-          <div className="font-display font-bold text-[16px] text-ink">Lakad</div>
-        </Link>
-        <nav className="flex gap-5 text-[13px] font-medium">
-          {desktopLinks.map((link, index) => {
-            const active = segment === link.href;
-            return (
+        <div className="flex items-center gap-[26px]">
+          <Link href={`/trip/${slug}`} className="flex items-center gap-2.5">
+            <LogoMark size={19} className="text-accent" />
+            <div className="font-display font-bold text-[16px] text-ink">Lakad</div>
+          </Link>
+          <nav className="flex gap-5 text-[13px] font-medium">
+            {desktopLinks.map((link, index) => {
+              const active = segment === link.href;
+              return (
+                <Link
+                  key={link.label}
+                  href={`/trip/${slug}${link.href}`}
+                  transitionTypes={directionTo(desktopIndex, index)}
+                  aria-current={active ? "page" : undefined}
+                  className={active ? "text-ink font-semibold" : "text-ink2 hover:text-ink"}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={copyInvite}
+            className="border border-line rounded-full px-[13px] py-[7px] font-semibold text-[12px] text-ink2 cursor-pointer hover:border-accent hover:text-ink"
+          >
+            {copied ? "Link copied" : "Copy invite link"}
+          </button>
+          {user ? (
+            <AccountMenu user={user} />
+          ) : (
+            <>
               <Link
-                key={link.label}
-                href={`/trip/${slug}${link.href}`}
-                transitionTypes={directionTo(desktopIndex, index)}
-                aria-current={active ? "page" : undefined}
-                className={
-                  active ? "text-ink font-semibold" : "text-ink2 hover:text-ink"
-                }
+                href={`/sign-in?next=${encodeURIComponent(`/trip/${slug}${segment}`)}`}
+                className="border border-line rounded-full px-[13px] py-[7px] font-semibold text-[12px] text-ink2 hover:border-accent hover:text-ink"
               >
-                {link.label}
+                Sign in
               </Link>
-            );
-          })}
-        </nav>
-      </div>
-      <div className="flex items-center gap-3">
-        <ThemeToggle />
-        <button
-          type="button"
-          onClick={copyInvite}
-          className="border border-line rounded-full px-[13px] py-[7px] font-semibold text-[12px] text-ink2 cursor-pointer hover:border-accent hover:text-ink"
-        >
-          {copied ? "Link copied" : "Copy invite link"}
-        </button>
-        {user ? (
-          <AccountMenu user={user} />
-        ) : (
-          <>
-            <GoogleSignIn compact label="Sign in" next={`/trip/${slug}${segment}`} />
-            <Avatar member={member} size={30} />
-          </>
-        )}
+              <Avatar member={member} size={30} />
+            </>
+          )}
         </div>
       </div>
     </div>

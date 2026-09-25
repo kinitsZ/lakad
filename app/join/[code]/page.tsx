@@ -8,7 +8,7 @@ import { getMembers, getTripByInviteCode } from "@/db/queries";
 import { syncTrip } from "@/lib/automations";
 import { countdownLabel, rangeLabel } from "@/lib/format";
 import { getCurrentMember, getUser } from "@/lib/session";
-import { GoogleSignIn } from "@/components/google-sign-in";
+import { SignInOptions } from "@/components/social-sign-in";
 
 export async function generateMetadata({ params }: PageProps<"/join/[code]">) {
   const { code } = await params;
@@ -109,7 +109,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
           <JoinForm code={trip.inviteCode} defaultName={user?.name.split(" ")[0] ?? ""} />
           {user ? (
             <p className="text-[12px] text-ink2 mt-3 text-center">
-              Joining as {user.email} — this trip will be saved to your account.
+              Joining as {user.name} — this trip will be saved to your account.
             </p>
           ) : (
             <div className="mt-4">
@@ -118,7 +118,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[code]">) {
                 or save it to an account
                 <span className="h-px flex-1 bg-line" />
               </div>
-              <GoogleSignIn next={`/join/${trip.inviteCode}`} />
+              <SignInOptions next={`/join/${trip.inviteCode}`} />
             </div>
           )}
         </div>
