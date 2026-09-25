@@ -64,6 +64,13 @@
       "when": 1790333856601,
       "tag": "0008_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790341095273,
+      "tag": "0009_enable_rls",
+      "breakpoints": true
     }
   ]
 }

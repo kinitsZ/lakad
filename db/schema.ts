@@ -14,6 +14,12 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
+/*
+ * Every table has Row Level Security on and no policies, so Supabase's public data
+ * API (anon/authenticated roles) can't read or write anything. The app connects as
+ * the table owner, which bypasses RLS. New tables must call .enableRLS() too.
+ */
+
 /* ---------------------------------------------------------------- trips */
 
 export const trips = pgTable("trips", {
@@ -44,7 +50,7 @@ export const trips = pgTable("trips", {
   coverKey: text("cover_key"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}).enableRLS();
 
 /* ------------------------------------------------------------- accounts */
 /*
@@ -61,7 +67,7 @@ export const authUser = pgTable("auth_user", {
   image: text("image"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const authSession = pgTable(
   "auth_session",
@@ -78,7 +84,7 @@ export const authSession = pgTable(
       .references(() => authUser.id, { onDelete: "cascade" }),
   },
   (table) => [index("auth_session_user_idx").on(table.userId)],
-);
+).enableRLS();
 
 export const authAccount = pgTable(
   "auth_account",
@@ -100,7 +106,7 @@ export const authAccount = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("auth_account_user_idx").on(table.userId)],
-);
+).enableRLS();
 
 export const authVerification = pgTable(
   "auth_verification",
@@ -113,7 +119,7 @@ export const authVerification = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("auth_verification_identifier_idx").on(table.identifier)],
-);
+).enableRLS();
 
 /* ------------------------------------------------------------- identity */
 
@@ -122,7 +128,7 @@ export const sessions = pgTable("sessions", {
   token: text("token").primaryKey(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const members = pgTable(
   "members",
@@ -147,7 +153,7 @@ export const members = pgTable(
     index("members_trip_idx").on(table.tripId),
     index("members_user_idx").on(table.userId),
   ],
-);
+).enableRLS();
 
 /** Which browsers act as which member. A member can be signed in on several devices. */
 export const memberSessions = pgTable(
@@ -165,7 +171,7 @@ export const memberSessions = pgTable(
     primaryKey({ columns: [table.memberId, table.sessionToken] }),
     index("member_sessions_token_idx").on(table.sessionToken),
   ],
-);
+).enableRLS();
 
 /**
  * Single-use, short-lived links that sign another device in as a member.
@@ -185,7 +191,7 @@ export const deviceLinks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("device_links_member_idx").on(table.memberId)],
-);
+).enableRLS();
 
 /* ---------------------------------------------------------- date voting */
 
@@ -204,7 +210,7 @@ export const dateVotes = pgTable(
     primaryKey({ columns: [table.memberId, table.day] }),
     index("date_votes_trip_idx").on(table.tripId),
   ],
-);
+).enableRLS();
 
 /** Marks a member as having submitted, even if they picked no days. */
 export const dateVoteSubmissions = pgTable(
@@ -221,7 +227,7 @@ export const dateVoteSubmissions = pgTable(
       .defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.memberId] }), index("dvs_trip_idx").on(table.tripId)],
-);
+).enableRLS();
 
 /* --------------------------------------------------- destination voting */
 
@@ -244,7 +250,7 @@ export const destinations = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("destinations_trip_idx").on(table.tripId)],
-);
+).enableRLS();
 
 export const destinationVotes = pgTable(
   "destination_votes",
@@ -263,7 +269,7 @@ export const destinationVotes = pgTable(
     primaryKey({ columns: [table.destinationId, table.memberId] }),
     index("destination_votes_trip_idx").on(table.tripId),
   ],
-);
+).enableRLS();
 
 /* ------------------------------------------------------------ itinerary */
 
@@ -284,7 +290,7 @@ export const activities = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("activities_trip_day_idx").on(table.tripId, table.day)],
-);
+).enableRLS();
 
 /* ------------------------------------------------------------- expenses */
 
@@ -304,7 +310,7 @@ export const expenses = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("expenses_trip_idx").on(table.tripId)],
-);
+).enableRLS();
 
 export const expenseSplits = pgTable(
   "expense_splits",
@@ -318,7 +324,7 @@ export const expenseSplits = pgTable(
     shareCents: integer("share_cents").notNull(),
   },
   (table) => [primaryKey({ columns: [table.expenseId, table.memberId] })],
-);
+).enableRLS();
 
 /** Transfers people actually made. Suggested transfers are computed, not stored. */
 export const payments = pgTable(
@@ -338,7 +344,7 @@ export const payments = pgTable(
     paidAt: timestamp("paid_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("payments_trip_idx").on(table.tripId)],
-);
+).enableRLS();
 
 /* -------------------------------------------------------- updates feed */
 
@@ -359,7 +365,7 @@ export const updates = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("updates_trip_idx").on(table.tripId, table.createdAt)],
-);
+).enableRLS();
 
 export const updateReads = pgTable(
   "update_reads",
@@ -373,7 +379,7 @@ export const updateReads = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.updateId, table.memberId] })],
-);
+).enableRLS();
 
 /* ---------------------------------------------------------- automations */
 
@@ -409,7 +415,7 @@ export const outbox = pgTable(
     index("outbox_due_idx").on(table.status, table.runAfter),
     uniqueIndex("outbox_dedupe_idx").on(table.dedupeKey),
   ],
-);
+).enableRLS();
 
 export type Trip = typeof trips.$inferSelect;
 export type Member = typeof members.$inferSelect;

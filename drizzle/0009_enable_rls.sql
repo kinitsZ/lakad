@@ -1,0 +1,20 @@
+ALTER TABLE "activities" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "auth_account" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "auth_session" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "auth_user" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "auth_verification" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "date_vote_submissions" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "date_votes" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "destination_votes" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "destinations" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "device_links" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "expense_splits" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "expenses" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "member_sessions" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "members" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "outbox" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "payments" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "sessions" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "trips" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "update_reads" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+ALTER TABLE "updates" ENABLE ROW LEVEL SECURITY;
