@@ -69,7 +69,7 @@ export async function addExpense(tripId: string, actor: Member, input: ExpenseIn
       split.map((row) => ({ expenseId: expense.id, ...row })),
     );
 
-    await schedulePaymentReminder(tripId, expense.id);
+    await schedulePaymentReminder(tripId);
   });
 
   await recordUpdate({

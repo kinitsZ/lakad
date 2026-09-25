@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="0.35" cy="0.3" r="0.9">
+      <stop offset="0" stop-color="#d9713a"/>
+      <stop offset="1" stop-color="#c25a26"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- The Lakad mark, 600 wide, centred (artwork is 27×16). -->
+  <svg x="212" y="334.2" width="600" height="355.6" viewBox="0 4 27 16" fill="#fffdfb">
+    <circle cx="8" cy="12" r="8" opacity="0.45"/>
+    <circle cx="19" cy="12" r="8" opacity="0.45"/>
+    <path d="M13.5 6.191A8 8 0 0 1 13.5 17.809 8 8 0 0 1 13.5 6.191Z"/>
+  </svg>
+</svg>

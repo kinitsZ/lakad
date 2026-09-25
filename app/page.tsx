@@ -95,7 +95,7 @@ export default async function LandingPage() {
             </p>
 
             <h1 className="font-display font-semibold text-[35px] lg:text-[60px] leading-[1.02] tracking-[-0.03em] mb-3 lg:mb-5">
-              Get six friends to agree on one weekend.
+              Get the whole group to agree on one weekend.
             </h1>
 
             <p className="text-[14px] lg:text-[17px] leading-[1.5] text-ink2 mb-[18px] lg:mb-7 lg:max-w-[520px]">
@@ -173,6 +173,9 @@ export default async function LandingPage() {
             </Link>
             <Link href="/credits" className="hover:text-ink">
               Photo credits
+            </Link>
+            <Link href="/privacy" className="hover:text-ink">
+              Privacy
             </Link>
           </nav>
           <p className="text-[12px] text-ink2/70 mt-8">© {new Date().getFullYear()} Lakad</p>

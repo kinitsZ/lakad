@@ -177,13 +177,17 @@ export async function scheduleVoteReminder(trip: typeof trips.$inferSelect) {
   });
 }
 
-/** Queued when an expense lands and somebody now owes the payer. */
-export async function schedulePaymentReminder(tripId: string, expenseId: string) {
+/**
+ * Queued when an expense lands, due three days later. At most one per trip per day:
+ * the reminder shows each person's whole balance, so five expenses logged on Monday
+ * still mean one email on Thursday, not five identical ones.
+ */
+export async function schedulePaymentReminder(tripId: string) {
+  const due = addDays(new Date().toISOString().slice(0, 10), 3);
   await enqueue({
     tripId,
     kind: OUTBOX.paymentReminder,
-    payload: { expenseId },
-    runAfter: new Date(`${addDays(new Date().toISOString().slice(0, 10), 3)}T09:00:00Z`),
-    dedupeKey: `${OUTBOX.paymentReminder}:${expenseId}`,
+    runAfter: new Date(`${due}T09:00:00Z`),
+    dedupeKey: `${OUTBOX.paymentReminder}:auto:${tripId}:${due}`,
   });
 }
