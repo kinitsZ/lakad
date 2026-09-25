@@ -20,9 +20,9 @@ export default function CreditsPage() {
           Photo credits
         </h1>
         <p className="text-[14px] leading-[1.6] text-ink2 mb-8">
-          Lakad&rsquo;s photography comes from Wikimedia Commons under
-          Creative Commons licences. Images have been resized and cropped to
-          fit; each one is credited to its photographer below.
+          Lakad&rsquo;s photography comes from Wikimedia Commons under Creative Commons licences.
+          Images have been resized and cropped to fit; each one is credited to its photographer
+          below.
         </p>
 
         <ul className="flex flex-col gap-4">
@@ -32,21 +32,11 @@ export default function CreditsPage() {
               className="bg-surface border border-line rounded-[18px] p-4 flex gap-4 items-start"
             >
               <div className="relative w-[84px] h-[60px] shrink-0 rounded-xl overflow-hidden bg-surface2">
-                <Image
-                  src={photo.src}
-                  alt=""
-                  fill
-                  sizes="84px"
-                  className="object-cover"
-                />
+                <Image src={photo.src} alt="" fill sizes="84px" className="object-cover" />
               </div>
               <div className="min-w-0">
-                <div className="font-semibold text-[14px] mb-1">
-                  {photo.credit.title}
-                </div>
-                <div className="text-[13px] text-ink2 mb-2">
-                  by {photo.credit.artist}
-                </div>
+                <div className="font-semibold text-[14px] mb-1">{photo.credit.title}</div>
+                <div className="text-[13px] text-ink2 mb-2">by {photo.credit.artist}</div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[12px]">
                   <a
                     href={photo.credit.licenseUrl}

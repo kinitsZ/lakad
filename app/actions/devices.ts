@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import QRCode from "qrcode";
-import { issueDeviceLink, redeemDeviceLink } from "@/lib/device-links";
+import { issueDeviceLink, redeemDeviceLink, safeNext } from "@/lib/device-links";
 import { lanAddresses } from "@/lib/lan";
 import { attachSession } from "@/lib/memberships";
 import { ensureSession, requireMember } from "@/lib/session";
@@ -42,5 +42,6 @@ export async function redeemLink(formData: FormData) {
 
   const session = await ensureSession();
   await attachSession(session, claimed.memberId, claimed.tripId);
-  redirect(`/trip/${claimed.slug}`);
+  const next = formData.get("next");
+  redirect(safeNext(typeof next === "string" ? next : null, claimed.slug));
 }

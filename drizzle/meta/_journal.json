@@ -36,6 +36,13 @@
       "when": 1790179288475,
       "tag": "0004_trip_invite_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790321015620,
+      "tag": "0005_link_purpose",
+      "breakpoints": true
     }
   ]
 }

@@ -5,51 +5,22 @@ import { refreshTrip } from "@/app/actions/revalidate";
 import { z } from "zod";
 import { db } from "@/db";
 import {
-  dateVoteSubmissions,
-  dateVotes,
   destinationVotes,
   destinations,
   trips,
 } from "@/db/schema";
 import { recordUpdate } from "@/lib/automations";
 import { requireMember } from "@/lib/session";
+import * as votingLib from "@/lib/voting";
 
 const UPVOTES_PER_MEMBER = 2;
 
-const daysSchema = z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(62);
-
 export async function submitDateVote(tripId: string, days: string[]) {
   const member = await requireMember(tripId);
-  const parsed = daysSchema.safeParse(days);
+  const parsed = votingLib.daysSchema.safeParse(days);
   if (!parsed.success) return { error: "Those dates didn't look right." };
 
-  await db.transaction(async (tx) => {
-    await tx.delete(dateVotes).where(eq(dateVotes.memberId, member.id));
-    if (parsed.data.length) {
-      await tx
-        .insert(dateVotes)
-        .values(parsed.data.map((day) => ({ tripId, memberId: member.id, day })));
-    }
-    await tx
-      .insert(dateVoteSubmissions)
-      .values({ tripId, memberId: member.id })
-      .onConflictDoUpdate({
-        target: dateVoteSubmissions.memberId,
-        set: { submittedAt: new Date() },
-      });
-  });
-
-  await recordUpdate({
-    tripId,
-    kind: "dates_voted",
-    icon: member.initials,
-    memberId: member.id,
-    title: `${member.name} marked ${parsed.data.length} free day${
-      parsed.data.length === 1 ? "" : "s"
-    }`,
-    body: "Date voting",
-  });
-
+  await votingLib.submitDateVote(tripId, member, parsed.data);
   refreshTrip();
   return { ok: true };
 }

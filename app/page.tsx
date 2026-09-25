@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LogoMark } from "@/components/logo";
-import { Cover } from "@/components/ui";
+import { Logo, LogoMark } from "@/components/logo";
+import { TripScene } from "@/components/trip-scene";
 import { getTripsForSession } from "@/db/queries";
 import { rangeLabel } from "@/lib/format";
-import { photos } from "@/lib/images";
 import { getSessionToken } from "@/lib/session";
 
 const steps = [
@@ -31,9 +30,7 @@ export default async function LandingPage() {
       <header className="mx-auto w-full max-w-[430px] lg:max-w-[1280px] flex items-center justify-between px-[22px] lg:px-6 py-2.5 lg:py-4">
         <div className="flex items-center gap-2.5">
           <LogoMark size={18} className="text-accent" />
-          <div className="font-display font-bold text-[15px] lg:text-[16px]">
-            Lakad
-          </div>
+          <div className="font-display font-bold text-[15px] lg:text-[16px]">Lakad</div>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
@@ -102,9 +99,8 @@ export default async function LandingPage() {
             </h1>
 
             <p className="text-[14px] lg:text-[17px] leading-[1.5] text-ink2 mb-[18px] lg:mb-7 lg:max-w-[520px]">
-              Share one link. Everyone votes on dates and places, builds the
-              itinerary, and splits the bill — reminders and calendar invites
-              happen on their own.
+              Share one link. Everyone votes on dates and places, builds the itinerary, and splits
+              the bill — reminders and calendar invites happen on their own.
             </p>
 
             <div className="flex flex-col lg:flex-row gap-2.5 lg:gap-3">
@@ -129,21 +125,7 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          <Cover
-            photo={photos.hero}
-            sizes="(min-width: 1024px) 45vw, 1px"
-            className="hidden lg:flex aspect-[4/5] max-h-[560px] rounded-[28px] items-end p-6"
-          >
-            <div className="w-full bg-ink text-bg rounded-[18px] px-5 py-4 flex items-center justify-between gap-4 shadow-frame">
-              <div>
-                <div className="font-semibold text-[14px] mb-[3px]">
-                  Voting closes in 2 days
-                </div>
-                <div className="text-[12px] opacity-70">4 of 6 have voted</div>
-              </div>
-              <div className="font-display font-semibold text-[22px]">47h</div>
-            </div>
-          </Cover>
+          <TripScene className="mt-8 lg:mt-0 aspect-[4/3] lg:aspect-[4/5] lg:max-h-[560px] rounded-[24px] lg:rounded-[28px] ring-1 ring-line shadow-frame" />
         </section>
 
         <section className="border-t border-line pt-4 lg:pt-14 lg:mt-16">
@@ -172,16 +154,28 @@ export default async function LandingPage() {
           </ol>
         </section>
 
-        <footer className="border-t border-line mt-10 lg:mt-14 pt-5 flex items-center justify-between gap-4 flex-wrap">
-          <div className="text-[12px] text-ink2">
-            Lakad — a Claude Design handoff, built for real.
-          </div>
-          <Link
-            href="/credits"
-            className="text-[12px] text-ink2 hover:text-ink hover:underline"
-          >
-            Photo credits
+        <footer className="border-t border-line mt-12 lg:mt-20 pt-10 lg:pt-14 flex flex-col items-center text-center">
+          <Link href="/" aria-label="Lakad home">
+            <Logo markSize={26} textClassName="font-display font-bold text-[22px]" />
           </Link>
+          <p className="text-[13px] lg:text-[14px] text-ink2 mt-3 max-w-[340px] leading-[1.5]">
+            Plan trips together — one link, no accounts, no spreadsheets.
+          </p>
+          <nav
+            aria-label="Footer"
+            className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-6 text-[13px] font-medium text-ink2"
+          >
+            <Link href="/new" className="hover:text-ink">
+              Plan a trip
+            </Link>
+            <Link href="/join" className="hover:text-ink">
+              I have an invite link
+            </Link>
+            <Link href="/credits" className="hover:text-ink">
+              Photo credits
+            </Link>
+          </nav>
+          <p className="text-[12px] text-ink2/70 mt-8">© {new Date().getFullYear()} Lakad</p>
         </footer>
       </main>
     </div>

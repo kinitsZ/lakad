@@ -22,6 +22,22 @@
   --h2: oklch(0.85 0.09 52);
   --h3: oklch(0.7 0.14 45);
   --shadow: 0 24px 60px rgba(35, 31, 28, 0.13);
+
+  /* Landing scene (components/trip-scene.tsx): warm dawn. */
+  --scene-sky-top: oklch(0.88 0.06 52);
+  --scene-sky-bottom: oklch(0.97 0.025 78);
+  --scene-far: oklch(0.8 0.05 38);
+  --scene-sea: oklch(0.72 0.075 205);
+  --scene-sea-deep: oklch(0.6 0.085 215);
+  --scene-foam: oklch(0.97 0.02 90);
+  --scene-sand: oklch(0.88 0.07 80);
+  --scene-sand-shade: oklch(0.81 0.08 70);
+  --scene-leaf: oklch(0.62 0.12 150);
+  --scene-leaf-dark: oklch(0.52 0.11 155);
+  --scene-wood: oklch(0.52 0.07 55);
+  --scene-cloud: #fffdfb;
+  --scene-route: #231f1c;
+  --scene-stars: 0;
 }
 
 [data-theme="dark"] {
@@ -44,6 +60,22 @@
   --h2: oklch(0.52 0.1 50);
   --h3: oklch(0.75 0.14 52);
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+
+  /* Landing scene: warm dusk with stars. */
+  --scene-sky-top: oklch(0.2 0.035 290);
+  --scene-sky-bottom: oklch(0.4 0.08 42);
+  --scene-far: oklch(0.3 0.045 30);
+  --scene-sea: oklch(0.35 0.055 225);
+  --scene-sea-deep: oklch(0.27 0.045 235);
+  --scene-foam: oklch(0.62 0.04 220);
+  --scene-sand: oklch(0.52 0.06 70);
+  --scene-sand-shade: oklch(0.44 0.06 65);
+  --scene-leaf: oklch(0.56 0.1 155);
+  --scene-leaf-dark: oklch(0.46 0.09 158);
+  --scene-wood: oklch(0.42 0.06 55);
+  --scene-cloud: oklch(0.44 0.035 40);
+  --scene-route: #f6f1ec;
+  --scene-stars: 1;
 }
 
 @theme inline {
@@ -254,6 +286,87 @@ button:not(:disabled):active {
   to {
     opacity: 1;
     translate: 0 0;
+  }
+}
+
+/* Landing scene ambience (components/trip-scene.tsx). Flights are SMIL, not here. */
+.scene-wave {
+  animation: scene-wave 7s linear infinite;
+}
+.scene-wave-slow {
+  animation-duration: 11s;
+}
+.scene-wave-reverse {
+  animation-direction: reverse;
+  animation-duration: 9s;
+}
+.scene-cloud {
+  animation: scene-drift 14s ease-in-out infinite alternate;
+}
+.scene-cloud-slow {
+  animation-duration: 19s;
+  animation-delay: -6s;
+}
+.scene-palm {
+  transform-origin: 183px 338px;
+  animation: scene-sway 4.5s ease-in-out infinite alternate;
+}
+.scene-boat {
+  transform-origin: 319px 410px;
+  animation: scene-bob 3.2s ease-in-out infinite alternate;
+}
+.scene-glow {
+  transform-origin: 300px 150px;
+  animation: scene-breathe 5s ease-in-out infinite alternate;
+}
+.scene-shore {
+  transform-origin: 206px 356px;
+  animation: scene-breathe 3s ease-in-out infinite alternate;
+}
+.scene-star {
+  animation: scene-twinkle 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes scene-wave {
+  to {
+    transform: translateX(var(--wave));
+  }
+}
+@keyframes scene-drift {
+  to {
+    transform: translateX(34px);
+  }
+}
+@keyframes scene-sway {
+  from {
+    transform: rotate(-2.5deg);
+  }
+  to {
+    transform: rotate(2.5deg);
+  }
+}
+@keyframes scene-bob {
+  from {
+    transform: translateY(0) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-5px) rotate(3deg);
+  }
+}
+@keyframes scene-breathe {
+  from {
+    transform: scale(0.94);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+@keyframes scene-twinkle {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
   }
 }
 

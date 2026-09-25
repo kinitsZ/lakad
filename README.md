@@ -80,8 +80,7 @@ POST /api/automations/tick          every ~5 minutes
       "jobId": "…", "kind": "payment_reminder",
       "to": "priya@example.com", "toName": "Priya",
       "subject": "You owe $74.00 for Cabo Reunion",
-      "text": "…", "html": "…",
-      "attachment": { "filename": "lakad-trip.ics", "mimeType": "text/calendar", "base64": "…" }  // calendar invites only
+      "text": "…", "html": "…"
     }],
     "skipped": [{ "jobId": "…", "kind": "vote_reminder", "reason": "everyone with an email has voted" }]
   }
@@ -106,7 +105,7 @@ nobody to email are marked `done` with a `skipped: …` note.
 | `kind` | Queued when | Emails |
 |---|---|---|
 | `vote_reminder` | trip created; due 24h before the deadline | members with an email who haven't voted |
-| `calendar_invite` | dates lock | every member with an email, with a `.ics` attached |
+| `calendar_invite` | dates lock | every member with an email, with "Add to Google Calendar" and `.ics` links (`/trip/<slug>/calendar.ics`) |
 | `payment_reminder` | an expense is added (due 3 days later), or "Remind" is tapped | people who still owe money (or just the one reminded) |
 | `settle_up_summary` | reserved for the trip being marked done | not sent yet |
 

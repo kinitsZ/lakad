@@ -12,6 +12,7 @@ import {
   type OutboxRow,
 } from "@/db/schema";
 import { OUTBOX } from "@/lib/automations";
+import { issueEmailLink } from "@/lib/device-links";
 import { computeBalances, settleUp } from "@/lib/balances";
 import { addDays, deadlineLabel, rangeLabel } from "@/lib/format";
 import { moneyExact } from "@/lib/money";
@@ -31,8 +32,6 @@ export type OutgoingEmail = {
   subject: string;
   text: string;
   html: string;
-  /** Base64 file content, e.g. the .ics for a calendar invite. */
-  attachment?: { filename: string; mimeType: string; base64: string };
 };
 
 /** A claimed job reappears if it isn't reported within this window (e.g. the runner crashed). */
@@ -154,24 +153,33 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
   );
   const tripUrl = `${origin}/trip/${trip.slug}`;
   const first = (name: string) => name.split(" ")[0];
+  // Each recipient's button signs *their* browser in, then lands on the right page —
+  // otherwise tapping it from a mail app or another device hits "invite-only".
+  const signIn = async (memberId: string, path: string) =>
+    `${origin}/link/${await issueEmailLink(memberId)}?next=${encodeURIComponent(path)}`;
 
   const email = (
     to: { email: string; name: string },
     subject: string,
     lines: string[],
     cta: { label: string; url: string },
-    attachment?: OutgoingEmail["attachment"],
+    extraLinks: { label: string; url: string }[] = [],
   ): OutgoingEmail => ({
     jobId: job.id,
     kind: job.kind,
     to: to.email,
     toName: to.name,
     subject,
-    text: [`Hi ${first(to.name)},`, "", ...lines, "", `${cta.label}: ${cta.url}`, "", "— Lakad"].join(
-      "\n",
-    ),
-    html: htmlEmail(`Hi ${first(to.name)},`, lines, cta),
-    attachment,
+    text: [
+      `Hi ${first(to.name)},`,
+      "",
+      ...lines,
+      "",
+      ...[cta, ...extraLinks].map((link) => `${link.label}: ${link.url}`),
+      "",
+      "— Lakad",
+    ].join("\n"),
+    html: htmlEmail(`Hi ${first(to.name)},`, lines, cta, extraLinks),
   });
 
   switch (job.kind) {
@@ -186,15 +194,17 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
       if (!recipients.length) return { skip: "everyone with an email has voted" };
 
       return {
-        emails: recipients.map((m) =>
-          email(
-            m,
-            `Voting on ${trip.name} closes soon`,
-            [
-              `Voting on dates for ${trip.name} closes ${deadlineLabel(trip.votingDeadline)}.`,
-              "Mark the days you're free so the group can lock the best range.",
-            ],
-            { label: "Pick your days", url: `${tripUrl}/dates` },
+        emails: await Promise.all(
+          recipients.map(async (m) =>
+            email(
+              m,
+              `Voting on ${trip.name} closes soon`,
+              [
+                `Voting on dates for ${trip.name} closes ${deadlineLabel(trip.votingDeadline)}.`,
+                "Mark the days you're free so the group can lock the best range.",
+              ],
+              { label: "Pick your days", url: await signIn(m.id, `/trip/${trip.slug}/dates`) },
+            ),
           ),
         ),
       };
@@ -204,36 +214,41 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
       if (!trip.lockedStart || !trip.lockedEnd) return { skip: "dates aren't locked" };
       if (!withEmail.length) return { skip: "nobody on the trip has added an email" };
       const range = rangeLabel(trip.lockedStart, trip.lockedEnd);
-      const ics = icsFile({
-        uid: `${trip.id}@lakad`,
-        title: trip.name,
-        start: trip.lockedStart,
-        end: trip.lockedEnd,
-        url: tripUrl,
-      });
+      const google = new URL("https://calendar.google.com/calendar/render");
+      google.searchParams.set("action", "TEMPLATE");
+      google.searchParams.set("text", trip.name);
+      google.searchParams.set(
+        "dates",
+        `${trip.lockedStart.replace(/-/g, "")}/${addDays(trip.lockedEnd, 1).replace(/-/g, "")}`,
+      );
+      google.searchParams.set("details", `Planned with Lakad: ${tripUrl}`);
 
       return {
-        emails: withEmail.map((m) =>
-          email(
-            m,
-            `${trip.name} is on: ${range}`,
-            [
-              `The dates for ${trip.name} are locked: ${range}.`,
-              "Open the attached invite to add it to your calendar.",
-            ],
-            { label: "Open the trip", url: tripUrl },
-            {
-              filename: "lakad-trip.ics",
-              mimeType: "text/calendar",
-              base64: Buffer.from(ics).toString("base64"),
-            },
+        emails: await Promise.all(
+          withEmail.map(async (m) =>
+            email(
+              m,
+              `${trip.name} is on: ${range}`,
+              [
+                `The dates for ${trip.name} are locked: ${range}.`,
+                "Add it to your calendar so nobody double-books the weekend.",
+              ],
+              { label: "Add to Google Calendar", url: google.toString() },
+              [
+                { label: "Apple / Outlook calendar (.ics)", url: `${tripUrl}/calendar.ics` },
+                { label: "Open the trip", url: await signIn(m.id, `/trip/${trip.slug}`) },
+              ],
+            ),
           ),
         ),
       };
     }
 
     case OUTBOX.paymentReminder: {
-      const transfers = await currentTransfers(trip.id, roster.map((m) => m.id));
+      const transfers = await currentTransfers(
+        trip.id,
+        roster.map((m) => m.id),
+      );
       // A reminder for one person (the "Remind" button) or everyone who owes (after an expense).
       const target = (job.payload as { memberId?: string }).memberId;
       const debtors = withEmail.filter(
@@ -243,22 +258,27 @@ async function render(job: OutboxRow, origin: string): Promise<Rendered> {
 
       const nameOf = new Map(roster.map((m) => [m.id, first(m.name)]));
       return {
-        emails: debtors.map((m) => {
-          const owed = transfers.filter((t) => t.fromMemberId === m.id);
-          const total = owed.reduce((sum, t) => sum + t.amountCents, 0);
-          const parts = owed.map(
-            (t) => `${moneyExact(t.amountCents)} to ${nameOf.get(t.toMemberId) ?? "someone"}`,
-          );
-          return email(
-            m,
-            `You owe ${moneyExact(total)} for ${trip.name}`,
-            [
-              `To settle up for ${trip.name}, you owe ${parts.join(" and ")}.`,
-              "Once you've paid, tap “Mark as paid” so everyone's balances update.",
-            ],
-            { label: "Settle up", url: `${tripUrl}/expenses/settle` },
-          );
-        }),
+        emails: await Promise.all(
+          debtors.map(async (m) => {
+            const owed = transfers.filter((t) => t.fromMemberId === m.id);
+            const total = owed.reduce((sum, t) => sum + t.amountCents, 0);
+            const parts = owed.map(
+              (t) => `${moneyExact(t.amountCents)} to ${nameOf.get(t.toMemberId) ?? "someone"}`,
+            );
+            return email(
+              m,
+              `You owe ${moneyExact(total)} for ${trip.name}`,
+              [
+                `To settle up for ${trip.name}, you owe ${parts.join(" and ")}.`,
+                "Once you've paid, tap “Mark as paid” so everyone's balances update.",
+              ],
+              {
+                label: "Settle up",
+                url: await signIn(m.id, `/trip/${trip.slug}/expenses/settle`),
+              },
+            );
+          }),
+        ),
       };
     }
 
@@ -315,35 +335,20 @@ const escapeHtml = (value: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-function htmlEmail(greeting: string, lines: string[], cta: { label: string; url: string }) {
+function htmlEmail(
+  greeting: string,
+  lines: string[],
+  cta: { label: string; url: string },
+  extraLinks: { label: string; url: string }[],
+) {
   const paragraphs = [greeting, ...lines]
     .map((line) => `<p style="margin:0 0 12px">${escapeHtml(line)}</p>`)
     .join("");
-  return `<div style="font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;color:#231f1c;max-width:480px">${paragraphs}<p style="margin:20px 0"><a href="${escapeHtml(cta.url)}" style="background:#c8643b;color:#fffdfb;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:600;display:inline-block">${escapeHtml(cta.label)}</a></p><p style="margin:0;color:#6f665e;font-size:13px">— Lakad</p></div>`;
-}
-
-/** An all-day event over the trip's dates (DTEND is exclusive in iCalendar). */
-function icsFile(event: { uid: string; title: string; start: string; end: string; url: string }) {
-  const text = (value: string) =>
-    value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-  const day = (iso: string) => iso.replace(/-/g, "");
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Lakad//Trips//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `UID:${event.uid}`,
-    `DTSTAMP:${stamp}`,
-    `DTSTART;VALUE=DATE:${day(event.start)}`,
-    `DTEND;VALUE=DATE:${day(addDays(event.end, 1))}`,
-    `SUMMARY:${text(event.title)}`,
-    `URL:${event.url}`,
-    "DESCRIPTION:Planned with Lakad",
-    "END:VEVENT",
-    "END:VCALENDAR",
-    "",
-  ].join("\r\n");
+  const extras = extraLinks
+    .map(
+      (link) =>
+        `<a href="${escapeHtml(link.url)}" style="color:#c8643b;font-weight:600">${escapeHtml(link.label)}</a>`,
+    )
+    .join(" &nbsp;·&nbsp; ");
+  return `<div style="font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;color:#231f1c;max-width:480px">${paragraphs}<p style="margin:20px 0 ${extras ? "10px" : "20px"}"><a href="${escapeHtml(cta.url)}" style="background:#c8643b;color:#fffdfb;text-decoration:none;padding:12px 18px;border-radius:12px;font-weight:600;display:inline-block">${escapeHtml(cta.label)}</a></p>${extras ? `<p style="margin:0 0 20px;font-size:14px">${extras}</p>` : ""}<p style="margin:0;color:#6f665e;font-size:13px">— Lakad</p></div>`;
 }

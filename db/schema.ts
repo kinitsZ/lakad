@@ -104,6 +104,8 @@ export const deviceLinks = pgTable(
     memberId: uuid("member_id")
       .notNull()
       .references(() => members.id, { onDelete: "cascade" }),
+    /** "device" (QR / copy link, one live at a time) or "email" (one per email sent). */
+    purpose: text("purpose").notNull().default("device"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     usedAt: timestamp("used_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

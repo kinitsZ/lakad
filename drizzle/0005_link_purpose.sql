@@ -1,0 +1,1 @@
+ALTER TABLE "device_links" ADD COLUMN "purpose" text DEFAULT 'device' NOT NULL;
